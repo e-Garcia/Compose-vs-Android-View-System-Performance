@@ -10,4 +10,4 @@ dependencyResolutionManagement {
 
 
 rootProject.name = "Compose-vs-Android-View-System-Performance"
-include(":shared", ":app-compose", ":app-view")
+include(":shared", ":app-compose", ":app-view", ":benchmark")
