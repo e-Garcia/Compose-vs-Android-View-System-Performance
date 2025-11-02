@@ -1,0 +1,6 @@
+-keep class androidx.test.** { *; }
+-keep class androidx.benchmark.** { *; }
+-keep class androidx.tracing.** { *; }
+-keep class androidx.startup.** { *; }
+-keep class androidx.profileinstaller.** { *; }
+-dontwarn com.google.errorprone.annotations.**

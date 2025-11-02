@@ -29,7 +29,17 @@ android {
                 "proguard-rules.pro"
             )
         }
-        debug { isMinifyEnabled = false }
+        debug {
+            isMinifyEnabled = false
+        }
+        // Benchmark-friendly build: release-optimized but controllable
+        create("benchmark") {
+            initWith(getByName("release"))
+            isDebuggable = true
+            isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("debug")
+            matchingFallbacks += listOf("release")
+        }
     }
 
     buildFeatures { compose = true }
@@ -41,12 +51,11 @@ kotlin {
 
 dependencies {
     implementation(project(":shared"))
-    implementation(platform("androidx.compose:compose-bom:${libs.versions.composeBom.get()}"))
+    implementation(platform(libs.compose.bom))
     implementation(libs.activity.compose)
     implementation(libs.androidx.ui)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material)
     debugImplementation(libs.androidx.ui.tooling)
-
 }
