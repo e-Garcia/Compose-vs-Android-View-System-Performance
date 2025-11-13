@@ -66,7 +66,7 @@ compose-vs-views/
    
    # Run the corresponding View cold-start benchmark (explicit serial)
    ./gradlew :benchmark:connectedBenchmarkAndroidTest \
-     -Pandroid.testInstrumentationRunnerArguments.serial=RFCT71GG5XA \
+     -Pandroid.testInstrumentationRunnerArguments.serial=ABCD12BB3AB \
      -Pandroid.testInstrumentationRunnerArguments.benchmarkTargetPackage=dev.egarcia.andperf.view \
      -Pandroid.testInstrumentationRunnerArguments.class=dev.egarcia.andperf.benchmark.ComposeViewBenchmarks#coldStartup_view \
      --info --stacktrace
