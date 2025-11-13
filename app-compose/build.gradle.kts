@@ -14,6 +14,9 @@ android {
         targetSdk = libs.versions.compileSdk.get().toInt()
         versionCode = 1
         versionName = "1.0"
+
+        // Use the Android benchmark runner so benchmark extras/listeners are recognized
+        testInstrumentationRunner = "androidx.benchmark.junit4.AndroidBenchmarkRunner"
     }
 
     compileOptions {
@@ -35,7 +38,8 @@ android {
         // Benchmark-friendly build: release-optimized but controllable
         create("benchmark") {
             initWith(getByName("release"))
-            isDebuggable = true
+            // The target app must NOT be debuggable for accurate macrobenchmarks
+            isDebuggable = false
             isMinifyEnabled = false
             signingConfig = signingConfigs.getByName("debug")
             matchingFallbacks += listOf("release")
@@ -58,4 +62,7 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material)
     debugImplementation(libs.androidx.ui.tooling)
+
+    // Include benchmark junit4 in the instrumentation APK so runner listener classes are present
+    androidTestImplementation(libs.benchmark.junit4)
 }
