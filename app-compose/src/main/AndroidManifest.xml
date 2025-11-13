@@ -3,7 +3,13 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <application android:label="Compose Demo" android:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar">
+    <application
+        android:label="Compose Demo"
+        android:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar">
+
+        <!-- Enable profiling for macrobenchmark tests on Android 10+ (API 29+) -->
+        <profileable android:shell="true" tools:targetApi="q" />
+
         <activity android:name=".MainActivity" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

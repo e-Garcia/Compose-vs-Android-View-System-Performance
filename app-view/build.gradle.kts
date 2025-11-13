@@ -25,6 +25,15 @@ android {
             )
         }
         debug { isMinifyEnabled = false }
+
+        create("benchmark") {
+            initWith(getByName("release"))
+            // The target app must NOT be debuggable for accurate macrobenchmarks
+            isDebuggable = false
+            isMinifyEnabled = false           // keep off for now to avoid R8 noise
+            signingConfig = signingConfigs.getByName("debug")
+            matchingFallbacks += listOf("release")
+        }
     }
 }
 kotlin {
@@ -35,4 +44,10 @@ dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.recyclerview)
     implementation(libs.androidx.material)
+
+    // Include profileinstaller 1.4.1+ to support API 34+ devices for macrobenchmark profile installs
+    implementation(libs.profileinstaller)
+
+    // Include benchmark junit4 in instrumentation classpath for lint/runner expectations
+    androidTestImplementation(libs.benchmark.junit4)
 }
