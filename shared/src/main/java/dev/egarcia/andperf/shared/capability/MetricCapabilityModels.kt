@@ -75,7 +75,7 @@ enum class AvailabilityReason(val friendlyMessage: String) {
 data class MetricCapability(
     val metric: MetricType,
     val supported: Boolean,
-    val reason: AvailabilityReason = AvailabilityReason.SUPPORTED,
+    val reason: AvailabilityReason,
     val details: String? = null
 ) {
     val message: String
