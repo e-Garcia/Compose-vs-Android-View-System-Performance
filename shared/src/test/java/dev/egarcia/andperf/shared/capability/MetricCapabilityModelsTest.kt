@@ -42,6 +42,47 @@ class MetricCapabilityModelsTest {
     }
 
     @Test
+    fun `resolveMessage falls back to friendly message when details missing`() {
+        val capability = MetricCapability(
+            metric = MetricType.FRAME_TIMING,
+            supported = false,
+            reason = AvailabilityReason.NO_DATA_COLLECTED,
+            details = null
+        )
+
+        assertEquals(AvailabilityReason.NO_DATA_COLLECTED.friendlyMessage, capability.message)
+    }
+
+    @Test
+    fun `resolveMessage falls back to friendly message when details blank`() {
+        val capability = MetricCapability(
+            metric = MetricType.STARTUP,
+            supported = false,
+            reason = AvailabilityReason.OS_TOO_OLD,
+            details = "   "
+        )
+
+        assertEquals(AvailabilityReason.OS_TOO_OLD.friendlyMessage, capability.message)
+    }
+
+    @Test
+    fun `supported capability serializes and reports friendly message`() {
+        val capability = MetricCapability(
+            metric = MetricType.POWER,
+            supported = true,
+            reason = AvailabilityReason.SUPPORTED
+        )
+
+        val payload = json.encodeToString(capability)
+        assertTrue(payload.contains("\"metric\":\"power\""))
+        assertTrue(payload.contains("\"reason\":\"supported\""))
+
+        val decoded = Json.decodeFromString<MetricCapability>(payload)
+        assertEquals(capability, decoded)
+        assertEquals(AvailabilityReason.SUPPORTED.friendlyMessage, capability.message)
+    }
+
+    @Test
     fun `device info round trip retains identity`() {
         val info = DeviceInfo(
             manufacturer = "Google",
