@@ -15,7 +15,7 @@ All measurements are executed on real physical devices using automated macrobenc
 
 ## 🧩 Repository Structure
 
-```
+```/
 compose-vs-views/
  ├── app-compose/        → Jetpack Compose implementation
  ├── app-view/           → XML View + RecyclerView implementation
