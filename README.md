@@ -145,12 +145,25 @@ compose-vs-views/
 ## 🔬 Implementation Details
 
 Both implementations use:
-- Identical data model (`Item(id, title, imageRes)`)
-- Fixed item height and layout dimensions
-- 1,000 locally cached image thumbnails (no network)
-- Shared fonts, paddings, and typographic scales
-- Same image loader and bitmap decode size
+- Identical data model (`Item(id, title, subtitle)`)
+- 1,000 generated local text rows (no network)
+- Fixed item height and layout dimensions for each row
+- Shared paddings and typographic scales for row title/subtitle text
 - Identical release build configurations
+
+### Current row parity checklist
+
+The Compose `LazyColumn` row and View `RecyclerView` row are intentionally aligned before collecting benchmark results:
+
+| Row attribute | Compose implementation | View implementation |
+|---------------|------------------------|---------------------|
+| Container width | `fillMaxWidth()` | `layout_width="match_parent"` |
+| Container height | `56.dp` | `layout_height="56dp"` |
+| Container padding | `12.dp` | `android:padding="12dp"` |
+| Title text | Separate `Text`, `16.sp` | Separate `TextView`, `16sp` |
+| Subtitle text | Separate `Text`, `14.sp` | Separate `TextView`, `14sp` |
+
+Future image or thumbnail scenarios should be added to both implementations together, with matching decode size and loader behavior documented before publishing those measurements.
 
 ---
 
