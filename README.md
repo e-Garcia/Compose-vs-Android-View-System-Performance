@@ -20,7 +20,7 @@ compose-vs-views/
  ├── app-compose/        → Jetpack Compose implementation
  ├── app-view/           → XML View + RecyclerView implementation
  ├── shared/             → Shared data models and fake repository
- ├── benchmark/          → AndroidX Macrobenchmark tests
+ ├── benchmark/          → AndroidX Macrobenchmark test APK sources
  ├── results/            → JSON / CSV benchmark outputs
  └── paper.md            → Research write-up (draft or published version)
 ```
@@ -42,6 +42,20 @@ compose-vs-views/
 | **Animation settings** | All animations disabled (Developer Options) |
 | **Network** | Off (airplane mode) |
 | **Thermal state** | Cooled device (25–35 °C) before each run |
+
+### Benchmark source sets
+
+The `benchmark` module uses the Android Gradle Plugin `com.android.test` plugin.
+Its runnable Macrobenchmark classes live in the module's main source set:
+
+- `benchmark/src/main/java/dev/egarcia/andperf/benchmark/ComposeViewBenchmarks.kt`
+- `benchmark/src/main/java/dev/egarcia/andperf/benchmark/SmokeBenchmark.kt`
+
+Do not add duplicate benchmark classes with the same package and class name under
+`benchmark/src/androidTest/`; the benchmark APK is assembled from the module's
+variant sources (for example `assembleBenchmark` / `assembleAndroidTest`), and
+keeping one source-set owner avoids ambiguous documentation and duplicate test
+definitions.
 
 ### Test Workflow
 
