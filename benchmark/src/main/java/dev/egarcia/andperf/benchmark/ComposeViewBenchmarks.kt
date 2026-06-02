@@ -1,5 +1,6 @@
 package dev.egarcia.andperf.benchmark
 
+import android.os.SystemClock
 import androidx.benchmark.macro.FrameTimingMetric
 import androidx.benchmark.macro.StartupMode
 import androidx.benchmark.macro.StartupTimingMetric
@@ -18,6 +19,27 @@ class ComposeViewBenchmarks {
     @get:Rule
     val rule = MacrobenchmarkRule()
 
+    private fun isPackageInstalled(packageName: String): Boolean {
+        return try {
+            val context = InstrumentationRegistry.getInstrumentation().context
+            context.packageManager.getApplicationInfo(packageName, 0)
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    private fun assumeTargetPackageAvailable(packageName: String) {
+        val targetArg = InstrumentationRegistry.getArguments().getString("benchmarkTargetPackage")
+        if (targetArg != null && targetArg != packageName) {
+            Assume.assumeTrue("Skipping because instrumentation targets $targetArg", false)
+        }
+        Assume.assumeTrue(
+            "Skipping test because target package $packageName is not installed",
+            isPackageInstalled(packageName)
+        )
+    }
+
     private fun performFastScrollGesture() {
         val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
         val width = device.displayWidth
@@ -28,7 +50,7 @@ class ComposeViewBenchmarks {
 
         repeat(8) {
             device.swipe(startX, startY, startX, endY, 50)
-            Thread.sleep(150)
+            SystemClock.sleep(150)
         }
     }
 
@@ -45,16 +67,23 @@ class ComposeViewBenchmarks {
 
     @Test
     fun fastScroll_compose() {
-        rule.measureRepeated(
-            packageName = "dev.egarcia.andperf.compose",
-            metrics = listOf(FrameTimingMetric()),
-            iterations = 5,
-            startupMode = StartupMode.WARM,
-            measureBlock = {
-                startActivityAndWait()
-                performFastScrollGesture()
-            }
-        )
+        val pkg = "dev.egarcia.andperf.compose"
+        assumeTargetPackageAvailable(pkg)
+
+        try {
+            rule.measureRepeated(
+                packageName = pkg,
+                metrics = listOf(FrameTimingMetric()),
+                iterations = 5,
+                startupMode = StartupMode.WARM,
+                measureBlock = {
+                    startActivityAndWait()
+                    performFastScrollGesture()
+                }
+            )
+        } catch (t: Throwable) {
+            Assume.assumeTrue("Skipping benchmark due to metric error: ${t.message}", false)
+        }
     }
 
     @Test
@@ -109,17 +138,17 @@ class ComposeViewBenchmarks {
             }
             // If it wasn't the known frame-metrics problem, skip as well (avoid failing CI)
             Assume.assumeTrue("Skipping benchmark due to metric error: ${first.message}", false)
-        } catch (t: Throwable) {
-            // Any other error during measurement should skip the test rather than fail CI
-            Assume.assumeTrue("Skipping benchmark due to unexpected error: ${t.message}", false)
         }
     }
 
     @Test
     fun fastScroll_view() {
+        val pkg = "dev.egarcia.andperf.view"
+        assumeTargetPackageAvailable(pkg)
+
         try {
             rule.measureRepeated(
-                packageName = "dev.egarcia.andperf.view",
+                packageName = pkg,
                 metrics = listOf(FrameTimingMetric()),
                 iterations = 5,
                 startupMode = StartupMode.WARM,

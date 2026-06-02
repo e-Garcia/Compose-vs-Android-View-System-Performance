@@ -1,5 +1,6 @@
 package dev.egarcia.andperf.benchmark
 
+import android.os.SystemClock
 import androidx.benchmark.macro.FrameTimingMetric
 import androidx.benchmark.macro.MacrobenchmarkRule
 import androidx.benchmark.macro.StartupMode
@@ -38,7 +39,7 @@ class ComposeViewBenchmarks {
 
         repeat(8) {
             device.swipe(startX, startY, startX, endY, 50)
-            Thread.sleep(150)
+            SystemClock.sleep(150)
         }
     }
 
