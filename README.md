@@ -3,6 +3,12 @@
 A quantitative, open research project comparing **Jetpack Compose** and the **traditional Android View system** under identical UI, dataset, and runtime conditions.  
 The goal is to measure and analyze real-device performance differences using reproducible, open benchmarks powered by **AndroidX Macrobenchmark**.
 
+## Maintenance status (2026-05-31)
+
+- Benchmark classes currently present in the project are `ComposeBenchmarks` and `ViewBenchmarks` under `benchmark/src/main/java/dev/egarcia/andperf/benchmark/`.
+- Local Gradle verification from this maintenance environment is blocked until Android SDK configuration is corrected (`local.properties` points to `/Users/egarcia/Library/Android/sdk`, which does not exist on this Linux host).
+- The README example results table remains unpopulated; no benchmark result files were verified by this maintenance scan.
+
 ---
 
 ## 📖 Abstract
@@ -61,19 +67,19 @@ compose-vs-views/
    # Simple run without specifying a device serial (works when only one device is connected)
    ./gradlew :benchmark:connectedBenchmarkAndroidTest \
      -Pandroid.testInstrumentationRunnerArguments.benchmarkTargetPackage=dev.egarcia.andperf.compose \
-     -Pandroid.testInstrumentationRunnerArguments.class=dev.egarcia.andperf.benchmark.ComposeViewBenchmarks#coldStartup_compose \
+     -Pandroid.testInstrumentationRunnerArguments.class=dev.egarcia.andperf.benchmark.ComposeBenchmarks#coldStartup_compose \
      --info --stacktrace
    
    # Run the corresponding View cold-start benchmark (explicit serial)
    ./gradlew :benchmark:connectedBenchmarkAndroidTest \
      -Pandroid.testInstrumentationRunnerArguments.serial=ABCD12BB3AB \
      -Pandroid.testInstrumentationRunnerArguments.benchmarkTargetPackage=dev.egarcia.andperf.view \
-     -Pandroid.testInstrumentationRunnerArguments.class=dev.egarcia.andperf.benchmark.ComposeViewBenchmarks#coldStartup_view \
+     -Pandroid.testInstrumentationRunnerArguments.class=dev.egarcia.andperf.benchmark.ViewBenchmarks#coldStartup_view \
      --info --stacktrace
 
    # Or run both sequentially in your shell (keeps outputs separate)
-   ./gradlew :benchmark:connectedBenchmarkAndroidTest -Pandroid.testInstrumentationRunnerArguments.benchmarkTargetPackage=dev.egarcia.andperf.compose -Pandroid.testInstrumentationRunnerArguments.class=dev.egarcia.andperf.benchmark.ComposeViewBenchmarks#coldStartup_compose --info --stacktrace && \
-   ./gradlew :benchmark:connectedBenchmarkAndroidTest -Pandroid.testInstrumentationRunnerArguments.benchmarkTargetPackage=dev.egarcia.andperf.view -Pandroid.testInstrumentationRunnerArguments.class=dev.egarcia.andperf.benchmark.ComposeViewBenchmarks#coldStartup_view --info --stacktrace
+   ./gradlew :benchmark:connectedBenchmarkAndroidTest -Pandroid.testInstrumentationRunnerArguments.benchmarkTargetPackage=dev.egarcia.andperf.compose -Pandroid.testInstrumentationRunnerArguments.class=dev.egarcia.andperf.benchmark.ComposeBenchmarks#coldStartup_compose --info --stacktrace && \
+   ./gradlew :benchmark:connectedBenchmarkAndroidTest -Pandroid.testInstrumentationRunnerArguments.benchmarkTargetPackage=dev.egarcia.andperf.view -Pandroid.testInstrumentationRunnerArguments.class=dev.egarcia.andperf.benchmark.ViewBenchmarks#coldStartup_view --info --stacktrace
    ```
    
    Note: passing the device serial is optional
@@ -144,13 +150,12 @@ compose-vs-views/
 
 ## 🔬 Implementation Details
 
-Both implementations use:
-- Identical data model (`Item(id, title, imageRes)`)
-- Fixed item height and layout dimensions
-- 1,000 locally cached image thumbnails (no network)
-- Shared fonts, paddings, and typographic scales
-- Same image loader and bitmap decode size
-- Identical release build configurations
+Current verified implementation baseline:
+- Shared data model is `Item(id, title, subtitle)`.
+- `FakeRepo.items()` generates 1,000 local text-only rows by default; there is no network dependency.
+- The Compose app renders the rows with a `LazyColumn` and a single combined title/subtitle `Text`.
+- The View app renders the same generated data with a `RecyclerView` row containing separate title and subtitle `TextView`s.
+- Strict visual parity items such as matching row height, typography, image assets, and shared image loading remain planned methodology work before publishing comparative results.
 
 ---
 
