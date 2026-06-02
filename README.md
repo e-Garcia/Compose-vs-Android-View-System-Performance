@@ -60,20 +60,22 @@ compose-vs-views/
    ```bash
    # Simple run without specifying a device serial (works when only one device is connected)
    ./gradlew :benchmark:connectedBenchmarkAndroidTest \
+     -PbenchmarkTarget=:app-compose \
      -Pandroid.testInstrumentationRunnerArguments.benchmarkTargetPackage=dev.egarcia.andperf.compose \
      -Pandroid.testInstrumentationRunnerArguments.class=dev.egarcia.andperf.benchmark.ComposeViewBenchmarks#coldStartup_compose \
      --info --stacktrace
    
    # Run the corresponding View cold-start benchmark (explicit serial)
    ./gradlew :benchmark:connectedBenchmarkAndroidTest \
+     -PbenchmarkTarget=:app-view \
      -Pandroid.testInstrumentationRunnerArguments.serial=ABCD12BB3AB \
      -Pandroid.testInstrumentationRunnerArguments.benchmarkTargetPackage=dev.egarcia.andperf.view \
      -Pandroid.testInstrumentationRunnerArguments.class=dev.egarcia.andperf.benchmark.ComposeViewBenchmarks#coldStartup_view \
      --info --stacktrace
 
    # Or run both sequentially in your shell (keeps outputs separate)
-   ./gradlew :benchmark:connectedBenchmarkAndroidTest -Pandroid.testInstrumentationRunnerArguments.benchmarkTargetPackage=dev.egarcia.andperf.compose -Pandroid.testInstrumentationRunnerArguments.class=dev.egarcia.andperf.benchmark.ComposeViewBenchmarks#coldStartup_compose --info --stacktrace && \
-   ./gradlew :benchmark:connectedBenchmarkAndroidTest -Pandroid.testInstrumentationRunnerArguments.benchmarkTargetPackage=dev.egarcia.andperf.view -Pandroid.testInstrumentationRunnerArguments.class=dev.egarcia.andperf.benchmark.ComposeViewBenchmarks#coldStartup_view --info --stacktrace
+   ./gradlew :benchmark:connectedBenchmarkAndroidTest -PbenchmarkTarget=:app-compose -Pandroid.testInstrumentationRunnerArguments.benchmarkTargetPackage=dev.egarcia.andperf.compose -Pandroid.testInstrumentationRunnerArguments.class=dev.egarcia.andperf.benchmark.ComposeViewBenchmarks#coldStartup_compose --info --stacktrace && \
+   ./gradlew :benchmark:connectedBenchmarkAndroidTest -PbenchmarkTarget=:app-view -Pandroid.testInstrumentationRunnerArguments.benchmarkTargetPackage=dev.egarcia.andperf.view -Pandroid.testInstrumentationRunnerArguments.class=dev.egarcia.andperf.benchmark.ComposeViewBenchmarks#coldStartup_view --info --stacktrace
    ```
    
    Note: passing the device serial is optional
@@ -81,9 +83,20 @@ compose-vs-views/
    - It becomes required when multiple devices are attached or when you need deterministic selection (CI).
    - Also note the `--info` and `--stacktrace` flags are optional diagnostic flags (use them for more logging or on failures).
 
-   Note: some projects provide a convenience task (for example `runAllBenchmarks`) — check your `build.gradle.kts` for such wrappers; if present you can run it like:
+   Note: this project also provides convenience tasks for target-specific benchmark runs:
    ```bash
-   ./gradlew runAllBenchmarks --info --stacktrace
+   # Verify task wiring without requiring a device.
+   bash ./gradlew runBenchmarkComposeClass --dry-run
+   bash ./gradlew runBenchmarkViewClass --dry-run
+
+   # Run one default cold-start method against each intended app package.
+   bash ./gradlew runBenchmarkComposeClass --info --stacktrace
+   bash ./gradlew runBenchmarkViewClass --info --stacktrace
+
+   # Override the class/method while preserving the target app/package wiring.
+   bash ./gradlew runBenchmarkViewClass \
+     -PbenchmarkClass=dev.egarcia.andperf.benchmark.ComposeViewBenchmarks#scroll_view \
+     --info --stacktrace
    ```
 
 3. Where to find results and traces
