@@ -48,6 +48,8 @@ class ComposeBenchmarks {
                 iterations = 5,
                 startupMode = StartupMode.WARM,
                 measureBlock = {
+                    startActivityAndWait()
+
                     // perform a series of scroll gestures using UiAutomator helper
                     val device = BenchmarkUtils.device
                     val width = device.displayWidth

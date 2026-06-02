@@ -1,5 +1,6 @@
 package dev.egarcia.andperf.benchmark
 
+import androidx.benchmark.macro.FrameTimingMetric
 import androidx.benchmark.macro.StartupMode
 import androidx.benchmark.macro.StartupTimingMetric
 import androidx.benchmark.macro.junit4.MacrobenchmarkRule
@@ -42,10 +43,12 @@ class ViewBenchmarks {
         try {
             rule.measureRepeated(
                 packageName = pkg,
-                metrics = listOf(), // rely on startup/frame metrics where appropriate; keep minimal
+                metrics = listOf(FrameTimingMetric()),
                 iterations = 5,
                 startupMode = StartupMode.WARM,
                 measureBlock = {
+                    startActivityAndWait()
+
                     val device = BenchmarkUtils.device
                     val width = device.displayWidth
                     val height = device.displayHeight
