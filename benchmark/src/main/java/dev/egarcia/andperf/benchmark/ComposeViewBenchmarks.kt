@@ -5,6 +5,8 @@ import androidx.benchmark.macro.StartupMode
 import androidx.benchmark.macro.StartupTimingMetric
 import androidx.benchmark.macro.junit4.MacrobenchmarkRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.uiautomator.UiDevice
 import org.junit.Assume
 import org.junit.Rule
 import org.junit.Test
@@ -16,6 +18,20 @@ class ComposeViewBenchmarks {
     @get:Rule
     val rule = MacrobenchmarkRule()
 
+    private fun performFastScrollGesture() {
+        val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
+        val width = device.displayWidth
+        val height = device.displayHeight
+        val startX = (width * 0.5).toInt()
+        val startY = (height * 0.8).toInt()
+        val endY = (height * 0.2).toInt()
+
+        repeat(8) {
+            device.swipe(startX, startY, startX, endY, 50)
+            Thread.sleep(150)
+        }
+    }
+
     @Test
     fun coldStartup_compose() {
         rule.measureRepeated(
@@ -24,6 +40,20 @@ class ComposeViewBenchmarks {
             iterations = 3,
             startupMode = StartupMode.COLD,
             measureBlock = { startActivityAndWait() }
+        )
+    }
+
+    @Test
+    fun fastScroll_compose() {
+        rule.measureRepeated(
+            packageName = "dev.egarcia.andperf.compose",
+            metrics = listOf(FrameTimingMetric()),
+            iterations = 5,
+            startupMode = StartupMode.WARM,
+            measureBlock = {
+                startActivityAndWait()
+                performFastScrollGesture()
+            }
         )
     }
 
@@ -82,6 +112,24 @@ class ComposeViewBenchmarks {
         } catch (t: Throwable) {
             // Any other error during measurement should skip the test rather than fail CI
             Assume.assumeTrue("Skipping benchmark due to unexpected error: ${t.message}", false)
+        }
+    }
+
+    @Test
+    fun fastScroll_view() {
+        try {
+            rule.measureRepeated(
+                packageName = "dev.egarcia.andperf.view",
+                metrics = listOf(FrameTimingMetric()),
+                iterations = 5,
+                startupMode = StartupMode.WARM,
+                measureBlock = {
+                    startActivityAndWait()
+                    performFastScrollGesture()
+                }
+            )
+        } catch (t: Throwable) {
+            Assume.assumeTrue("Skipping benchmark due to metric error: ${t.message}", false)
         }
     }
 }

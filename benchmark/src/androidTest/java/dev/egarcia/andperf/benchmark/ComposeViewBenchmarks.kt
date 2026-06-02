@@ -6,6 +6,7 @@ import androidx.benchmark.macro.StartupMode
 import androidx.benchmark.macro.StartupTimingMetric
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.uiautomator.UiDevice
 import org.junit.Assume
 import org.junit.Rule
 import org.junit.Test
@@ -24,6 +25,20 @@ class ComposeViewBenchmarks {
             true
         } catch (e: Exception) {
             false
+        }
+    }
+
+    private fun performFastScrollGesture() {
+        val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
+        val width = device.displayWidth
+        val height = device.displayHeight
+        val startX = (width * 0.5).toInt()
+        val startY = (height * 0.8).toInt()
+        val endY = (height * 0.2).toInt()
+
+        repeat(8) {
+            device.swipe(startX, startY, startX, endY, 50)
+            Thread.sleep(150)
         }
     }
 
@@ -53,6 +68,31 @@ class ComposeViewBenchmarks {
     }
 
     @Test
+    fun fastScroll_compose() {
+        val pkg = "dev.egarcia.andperf.compose"
+        val targetArg = InstrumentationRegistry.getArguments().getString("benchmarkTargetPackage")
+        if (targetArg != null && targetArg != pkg) {
+            Assume.assumeTrue("Skipping because instrumentation targets $targetArg", false)
+        }
+        Assume.assumeTrue("Skipping test because target package $pkg is not installed", isPackageInstalled(pkg))
+
+        try {
+            rule.measureRepeated(
+                packageName = pkg,
+                metrics = listOf(FrameTimingMetric()),
+                iterations = 5,
+                startupMode = StartupMode.WARM,
+                measureBlock = {
+                    startActivityAndWait()
+                    performFastScrollGesture()
+                }
+            )
+        } catch (t: Throwable) {
+            Assume.assumeTrue("Skipping benchmark due to metric error: ${t.message}", false)
+        }
+    }
+
+    @Test
     fun coldStartup_view() {
         val pkg = "dev.egarcia.andperf.view"
         val targetArg = InstrumentationRegistry.getArguments().getString("benchmarkTargetPackage")
@@ -72,6 +112,31 @@ class ComposeViewBenchmarks {
         } catch (t: Throwable) {
             // Some devices/targets may not produce frame timing results or other metric errors may occur.
             // Skip the test instead of failing the whole run when metric processing fails.
+            Assume.assumeTrue("Skipping benchmark due to metric error: ${t.message}", false)
+        }
+    }
+
+    @Test
+    fun fastScroll_view() {
+        val pkg = "dev.egarcia.andperf.view"
+        val targetArg = InstrumentationRegistry.getArguments().getString("benchmarkTargetPackage")
+        if (targetArg != null && targetArg != pkg) {
+            Assume.assumeTrue("Skipping because instrumentation targets $targetArg", false)
+        }
+        Assume.assumeTrue("Skipping test because target package $pkg is not installed", isPackageInstalled(pkg))
+
+        try {
+            rule.measureRepeated(
+                packageName = pkg,
+                metrics = listOf(FrameTimingMetric()),
+                iterations = 5,
+                startupMode = StartupMode.WARM,
+                measureBlock = {
+                    startActivityAndWait()
+                    performFastScrollGesture()
+                }
+            )
+        } catch (t: Throwable) {
             Assume.assumeTrue("Skipping benchmark due to metric error: ${t.message}", false)
         }
     }
