@@ -21,7 +21,7 @@ compose-vs-views/
  ├── app-view/           → XML View + RecyclerView implementation
  ├── shared/             → Shared data models and fake repository
  ├── benchmark/          → AndroidX Macrobenchmark tests
- ├── results/            → JSON / CSV benchmark outputs
+ ├── results/            → Tracked benchmark result policy and curated summaries
  └── paper.md            → Research write-up (draft or published version)
 ```
 
@@ -110,9 +110,9 @@ compose-vs-views/
    adb pull /sdcard/Android/media/dev.egarcia.andperf.benchmark/additional_test_output ./benchmark/build/outputs/connected_android_test_additional_output/
    ```
 
-5. Aggregate and analyze
+5. Preserve, aggregate, and analyze
 
-   Collect the JSON/CSV outputs from the additional output directory or use the HTML report to inspect per-test timings, then aggregate medians/p90/p95 for final analysis.
+   Keep generated build artifacts out of Git. For each verified physical-device run, copy only curated summaries/manifests into `results/` and record where the raw JSON, HTML, and perfetto artifacts were retained. See [`results/README.md`](results/README.md) for the artifact policy.
 
 ---
 
@@ -174,7 +174,7 @@ Both implementations use:
    ./gradlew :app-compose:assembleRelease :app-view:assembleRelease :benchmark:assembleBenchmark
    ```
 3. Install and run benchmarks on connected physical device(s).
-4. Export results from `/results/` and compare using your favorite data-analysis tool.
+4. Export generated benchmark outputs from `benchmark/build/outputs/connected_android_test_additional_output/`, retain the raw artifacts, and add a curated summary or manifest under `results/` before comparing results.
 
 ---
 
