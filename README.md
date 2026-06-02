@@ -1,15 +1,29 @@
 # Compose vs Android View System Performance Benchmark
 
-A quantitative, open research project comparing **Jetpack Compose** and the **traditional Android View system** under identical UI, dataset, and runtime conditions.  
-The goal is to measure and analyze real-device performance differences using reproducible, open benchmarks powered by **AndroidX Macrobenchmark**.
+A quantitative, open research project comparing **Jetpack Compose** and the
+**traditional Android View system** under controlled UI, dataset, and runtime
+conditions.
+
+The current checked-in baseline is intentionally small: it compares a
+Compose `LazyColumn` against an Android View `RecyclerView`, each rendering the
+same generated text-only dataset. The long-term research target is to evolve
+that baseline into stricter visual parity, richer rows, and retained
+device-verified benchmark artifacts before publishing numeric conclusions.
 
 ---
 
 ## 📖 Abstract
 
-This study evaluates the rendering performance of Jetpack Compose compared to the legacy Android View system when displaying equivalent user interfaces and datasets.  
-Benchmarks include cold startup time, first frame latency, jank during fast scrolling, and frame time percentiles (p50, p90, p95, p99).  
-All measurements are executed on real physical devices using automated macrobenchmarks to ensure reproducibility and scientific rigor.
+This study evaluates the rendering performance of Jetpack Compose compared to
+the legacy Android View system when displaying equivalent user interfaces and
+datasets. The source currently contains startup-focused AndroidX
+Macrobenchmark tests for both app variants and includes `FrameTimingMetric()`
+where supported by the runtime.
+
+Planned benchmark coverage includes cold startup, first frame latency, jank
+during fast scrolling, and frame time percentiles (p50, p90, p95, p99). Numeric
+results should only be added after the raw JSON/HTML/perfetto outputs are
+retained under documented device and run conditions.
 
 ---
 
@@ -32,13 +46,16 @@ compose-vs-views/
 | Aspect | Description |
 |--------|--------------|
 | **Frameworks compared** | Jetpack Compose (LazyColumn) vs Android Views (RecyclerView) |
-| **Test tool** | AndroidX Macrobenchmark v1.2.4 |
-| **Metrics** | Cold startup, First frame latency, Scroll jank, Frame time percentiles |
+| **Test tool** | AndroidX Macrobenchmark via the version catalog (`androidx.benchmark`) |
+| **Current metrics** | Startup timing; frame timing when the device/runtime produces frame samples |
+| **Planned metrics** | Cold startup, first frame latency, scroll jank, frame time percentiles, optional memory |
 | **Devices** | _(List your test devices)_ |
 | **Android versions** | _(e.g., Android 13, 14)_ |
-| **Iterations per metric** | 10 per app per compilation mode |
-| **Build type** | Release build, R8 minified, identical ProGuard rules |
-| **Compilation modes** | None, Partial |
+| **Current iterations** | 3 per checked-in startup benchmark |
+| **Target iterations** | 10 per app per compilation mode before publishing results |
+| **Current build type** | Benchmark variants signed with debug signing; release-like measurement setup still needs validation |
+| **Target build type** | Release or release-like builds, R8 minified where appropriate, identical ProGuard rules |
+| **Compilation modes** | Planned: None, Partial |
 | **Animation settings** | All animations disabled (Developer Options) |
 | **Network** | Off (airplane mode) |
 | **Thermal state** | Cooled device (25–35 °C) before each run |
@@ -116,15 +133,16 @@ compose-vs-views/
 
 ---
 
-## 📊 Metrics Collected
+## 📊 Metrics Collected and Planned
 
 | Metric | Description |
 |---------|-------------|
-| **Cold Startup (ms)** | Time from process start until first frame rendered |
-| **First Frame Latency (ms)** | Delay before first visible frame on launch |
-| **Frame Time Percentiles (p50–p99)** | Frame render duration distribution during continuous scroll |
-| **Jank (%)** | Percentage of frames exceeding 16.6 ms |
-| **Memory (MB)** | Peak RSS during scroll (optional) |
+| **Cold Startup (ms)** | Current startup benchmark target; time from process start until first frame rendered |
+| **Frame timing samples** | Requested by current startup tests with `FrameTimingMetric()`; availability may vary by device/runtime |
+| **First Frame Latency (ms)** | Planned reporting field derived from startup output where supported |
+| **Frame Time Percentiles (p50–p99)** | Planned for continuous scroll benchmarks, not yet published as verified results |
+| **Jank (%)** | Planned for continuous scroll benchmarks, not yet published as verified results |
+| **Memory (MB)** | Optional future metric, not implemented in the current baseline |
 
 ---
 
@@ -144,13 +162,25 @@ compose-vs-views/
 
 ## 🔬 Implementation Details
 
-Both implementations use:
-- Identical data model (`Item(id, title, imageRes)`)
-- Fixed item height and layout dimensions
-- 1,000 locally cached image thumbnails (no network)
-- Shared fonts, paddings, and typographic scales
-- Same image loader and bitmap decode size
-- Identical release build configurations
+### Current checked-in baseline
+
+Both implementations currently use:
+- Identical generated data from `FakeRepo.items(count = 1000)`.
+- Identical shared model fields: `Item(id, title, subtitle)`.
+- Text-only rows with title/subtitle content and no network access.
+- Compose `LazyColumn` in `app-compose` and View `RecyclerView` in `app-view`.
+- Startup benchmark methods for `dev.egarcia.andperf.compose` and
+  `dev.egarcia.andperf.view`.
+
+### Intended research target
+
+Before publishing final conclusions, the project should either implement or
+explicitly document any intentionally omitted parity targets, including:
+- Fixed row heights and matching layout dimensions across Compose and View.
+- Shared fonts, paddings, typographic scales, and visual hierarchy.
+- Optional local thumbnails/images and identical decode/loading behavior.
+- Comparable build and compilation settings for both app variants.
+- Retained benchmark artifacts that support every reported number.
 
 ---
 
@@ -174,7 +204,10 @@ Both implementations use:
    ./gradlew :app-compose:assembleRelease :app-view:assembleRelease :benchmark:assembleBenchmark
    ```
 3. Install and run benchmarks on connected physical device(s).
-4. Export results from `/results/` and compare using your favorite data-analysis tool.
+4. Copy retained raw outputs into a documented `results/` subdirectory before
+   adding numeric summaries to this README.
+5. Compare using your favorite data-analysis tool, citing the artifact path for
+   every published number.
 
 ---
 
