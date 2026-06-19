@@ -55,7 +55,8 @@ object BenchmarkMetricSelector {
         val selected = mutableListOf<MetricType>()
         val skipped = mutableListOf<MetricCapability>()
 
-        request.requestedMetrics.distinct().forEach { metric ->
+        val uniqueRequested = request.requestedMetrics.distinct()
+        uniqueRequested.forEach { metric ->
             val capability = capabilityByMetric[metric] ?: MetricCapability(
                 metric = metric,
                 supported = false,
@@ -72,7 +73,7 @@ object BenchmarkMetricSelector {
 
         val requiredSatisfied = request.requiredMetrics.all { it in selected }
         return MetricSelectionResult(
-            requestedMetrics = request.requestedMetrics.distinct(),
+            requestedMetrics = uniqueRequested,
             selectedMetrics = selected,
             skippedMetrics = skipped,
             requiredMetricsSatisfied = requiredSatisfied
