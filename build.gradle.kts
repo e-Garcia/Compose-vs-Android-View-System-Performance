@@ -9,31 +9,48 @@ plugins {
 val deviceSerial: String? = (project.findProperty("deviceSerial") as? String)
 val benchmarkClassOverride: String? = (project.findProperty("benchmarkClass") as? String)
 
-// Assemble+install for each app as Exec tasks
-tasks.register<Exec>("assembleInstallCompose") {
+// Assemble+install for each app as Gradle task dependencies (avoid spawning nested Gradle)
+tasks.register("assembleInstallCompose") {
     group = "benchmark"
     description = "Assemble & install :app-compose:benchmark"
-    doFirst {
-        commandLine("./gradlew", ":app-compose:assembleBenchmark", ":app-compose:installBenchmark")
-    }
+    // Depend on the concrete tasks in the subproject so this runs in the same Gradle invocation
+    dependsOn(":app-compose:assembleBenchmark", ":app-compose:installBenchmark")
 }
 
-tasks.register<Exec>("assembleInstallView") {
+tasks.register("assembleInstallView") {
     group = "benchmark"
     description = "Assemble & install :app-view:benchmark"
-    doFirst {
-        commandLine("./gradlew", ":app-view:assembleBenchmark", ":app-view:installBenchmark")
-    }
+    dependsOn(":app-view:assembleBenchmark", ":app-view:installBenchmark")
 }
 
 // Install both apps
-tasks.register<Exec>("benchInstallAll") {
+tasks.register("benchInstallAll") {
     group = "benchmark"
     description = "Assemble & install benchmark APKs for both app modules (:app-compose and :app-view)"
+    dependsOn(":app-compose:assembleBenchmark", ":app-compose:installBenchmark",
+        ":app-view:assembleBenchmark", ":app-view:installBenchmark")
+}
+
+// NOTE: the small helper `projectPathToPackage` was removed to avoid an unused-symbol warning.
+// If you need a mapping from project path to package in the future, re-add a minimal helper.
+
+// Convenience tasks to run a single benchmark test class for Compose or View.
+// They set the instrumentation runner arguments in the current Gradle invocation
+// via the extra properties so the :benchmark:connectedBenchmarkAndroidTest task picks them up.
+
+tasks.register("runBenchmarkComposeClass") {
+    group = "benchmark"
+    description = "Assemble/install :app-compose and run Compose benchmark class (sets instrumentation class & package)"
     doFirst {
-        commandLine("./gradlew", ":app-compose:assembleBenchmark", ":app-compose:installBenchmark",
-            ":app-view:assembleBenchmark", ":app-view:installBenchmark")
+        // Set instrumentation runner args as project properties for this invocation
+        project.extensions.extraProperties.set("android.testInstrumentationRunnerArguments.class", "dev.egarcia.andperf.benchmark.ComposeBenchmarks")
+        project.extensions.extraProperties.set("android.testInstrumentationRunnerArguments.benchmarkTargetPackage", "dev.egarcia.andperf.compose")
+        if (deviceSerial != null) {
+            project.extensions.extraProperties.set("android.testInstrumentationRunnerArguments.serial", deviceSerial)
+            logger.lifecycle("Passing serial to instrumentation runner: $deviceSerial")
+        }
     }
+    dependsOn("assembleInstallCompose", ":benchmark:connectedBenchmarkAndroidTest")
 }
 
 fun projectPathToPackage(targetProject: String): String = when (targetProject) {
@@ -61,16 +78,6 @@ fun buildBenchmarkCmd(targetProject: String, singleClassOnly: Boolean = false): 
     if (testClass.isNotBlank()) {
         cmd.add("-Pandroid.testInstrumentationRunnerArguments.class=$testClass")
     }
-    return cmd
-}
-
-// Exec tasks to run the benchmark instrumentation for a given target
-tasks.register<Exec>("benchmarkComposeRun") {
-    group = "benchmark"
-    description = "Run :benchmark:connectedBenchmarkAndroidTest for :app-compose"
-    doFirst {
-        commandLine(buildBenchmarkCmd(":app-compose"))
-    }
 }
 
 tasks.register<Exec>("runBenchmarkComposeClass") {
@@ -84,8 +91,11 @@ tasks.register<Exec>("runBenchmarkComposeClass") {
 tasks.register<Exec>("benchmarkViewRun") {
     group = "benchmark"
     description = "Run :benchmark:connectedBenchmarkAndroidTest for :app-view"
+    dependsOn(":benchmark:assembleBenchmark", ":benchmark:connectedBenchmarkAndroidTest")
     doFirst {
-        commandLine(buildBenchmarkCmd(":app-view"))
+        if (deviceSerial != null) {
+            logger.lifecycle("deviceSerial project property is set but to pass it to the instrumentation runner please use -Pandroid.testInstrumentationRunnerArguments.serial=$deviceSerial or ANDROID_SERIAL env var")
+        }
     }
 }
 
@@ -114,8 +124,6 @@ tasks.register("runAllBenchmarks") {
     group = "benchmark"
     description = "Install both apps then run benchmarks for :app-compose then :app-view sequentially"
     dependsOn("benchInstallAll", "benchmarkComposeRun", "benchmarkViewRun")
-    // enforce ordering: run view after compose
-    // moved mustRunAfter to top-level below to avoid NamedDomainObjectProvider.configure in task context
 }
 
 // enforce ordering so installs happen before running benchmarks

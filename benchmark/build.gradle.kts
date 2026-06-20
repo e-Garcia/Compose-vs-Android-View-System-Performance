@@ -7,6 +7,9 @@ android {
     namespace = "dev.egarcia.andperf.benchmark"
     compileSdk = libs.versions.compileSdk.get().toInt()
 
+    // Start by targeting the Compose app; can be overridden with -PbenchmarkTarget=":app-view"
+    val benchmarkTarget = (project.findProperty("benchmarkTarget") as? String) ?: ":app-compose"
+
     defaultConfig {
         minSdk = libs.versions.minSdk.get().toInt()
         testInstrumentationRunner = "androidx.benchmark.junit4.AndroidBenchmarkRunner"
@@ -17,11 +20,21 @@ android {
 
         // Enable self-instrumenting so the benchmark APK isn't declared as targeting the app package
         experimentalProperties["android.experimental.self-instrumenting"] = true
+
+        // Set the benchmarkTargetPackage instrumentation argument so the runner knows which app
+        // package to measure. This maps the known module path to the correct applicationId.
+        testInstrumentationRunnerArguments["benchmarkTargetPackage"] = when (benchmarkTarget) {
+            ":app-compose" -> "dev.egarcia.andperf.compose"
+            ":app-view" -> "dev.egarcia.andperf.view"
+            else -> "dev.egarcia.andperf.compose"
+        }
     }
 
-    // Start by targeting the Compose app; can be overridden with -PbenchmarkTarget=":app-view"
-    val benchmarkTarget = (project.findProperty("benchmarkTarget") as? String) ?: ":app-compose"
     targetProjectPath = benchmarkTarget
+    // Ensure we target the non-debuggable 'benchmark' variant of the app so the installed
+    // target APK is the benchmark build (which should have isDebuggable=false in app modules).
+    // This prevents Macrobenchmark from failing with the DEBUGGABLE error.
+    targetVariant = "benchmark"
 
     buildTypes {
         // Debug build type for Android Studio test recognition

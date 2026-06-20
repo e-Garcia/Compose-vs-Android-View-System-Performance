@@ -10,6 +10,12 @@ same generated text-only dataset. The long-term research target is to evolve
 that baseline into stricter visual parity, richer rows, and retained
 device-verified benchmark artifacts before publishing numeric conclusions.
 
+## Maintenance status (2026-05-31)
+
+- Benchmark classes currently present in the project are `ComposeBenchmarks` and `ViewBenchmarks` under `benchmark/src/main/java/dev/egarcia/andperf/benchmark/`.
+- Local Gradle verification from this maintenance environment is blocked until Android SDK configuration is corrected (`local.properties` points to `/Users/egarcia/Library/Android/sdk`, which does not exist on this Linux host).
+- The README example results table remains unpopulated; no benchmark result files were verified by this maintenance scan.
+
 ---
 
 ## 📖 Abstract
@@ -95,7 +101,7 @@ definitions.
    ./gradlew :benchmark:connectedBenchmarkAndroidTest \
      -PbenchmarkTarget=:app-compose \
      -Pandroid.testInstrumentationRunnerArguments.benchmarkTargetPackage=dev.egarcia.andperf.compose \
-     -Pandroid.testInstrumentationRunnerArguments.class=dev.egarcia.andperf.benchmark.ComposeViewBenchmarks#coldStartup_compose \
+     -Pandroid.testInstrumentationRunnerArguments.class=dev.egarcia.andperf.benchmark.ComposeBenchmarks#coldStartup_compose \
      --info --stacktrace
    
    # Run the corresponding View cold-start benchmark (explicit serial)
@@ -103,12 +109,12 @@ definitions.
      -PbenchmarkTarget=:app-view \
      -Pandroid.testInstrumentationRunnerArguments.serial=ABCD12BB3AB \
      -Pandroid.testInstrumentationRunnerArguments.benchmarkTargetPackage=dev.egarcia.andperf.view \
-     -Pandroid.testInstrumentationRunnerArguments.class=dev.egarcia.andperf.benchmark.ComposeViewBenchmarks#coldStartup_view \
+     -Pandroid.testInstrumentationRunnerArguments.class=dev.egarcia.andperf.benchmark.ViewBenchmarks#coldStartup_view \
      --info --stacktrace
 
    # Or run both sequentially in your shell (keeps outputs separate)
-   ./gradlew :benchmark:connectedBenchmarkAndroidTest -PbenchmarkTarget=:app-compose -Pandroid.testInstrumentationRunnerArguments.benchmarkTargetPackage=dev.egarcia.andperf.compose -Pandroid.testInstrumentationRunnerArguments.class=dev.egarcia.andperf.benchmark.ComposeViewBenchmarks#coldStartup_compose --info --stacktrace && \
-   ./gradlew :benchmark:connectedBenchmarkAndroidTest -PbenchmarkTarget=:app-view -Pandroid.testInstrumentationRunnerArguments.benchmarkTargetPackage=dev.egarcia.andperf.view -Pandroid.testInstrumentationRunnerArguments.class=dev.egarcia.andperf.benchmark.ComposeViewBenchmarks#coldStartup_view --info --stacktrace
+   ./gradlew :benchmark:connectedBenchmarkAndroidTest -Pandroid.testInstrumentationRunnerArguments.benchmarkTargetPackage=dev.egarcia.andperf.compose -Pandroid.testInstrumentationRunnerArguments.class=dev.egarcia.andperf.benchmark.ComposeBenchmarks#coldStartup_compose --info --stacktrace && \
+   ./gradlew :benchmark:connectedBenchmarkAndroidTest -Pandroid.testInstrumentationRunnerArguments.benchmarkTargetPackage=dev.egarcia.andperf.view -Pandroid.testInstrumentationRunnerArguments.class=dev.egarcia.andperf.benchmark.ViewBenchmarks#coldStartup_view --info --stacktrace
    ```
    
    Note: passing the device serial is optional
