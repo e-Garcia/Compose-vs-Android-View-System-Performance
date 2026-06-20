@@ -13,6 +13,16 @@ class MetricCapabilityModelsTest {
         prettyPrint = false
     }
 
+    private val device = DeviceInfo(
+        manufacturer = "Google",
+        model = "Pixel 8",
+        device = "shiba",
+        sdkInt = 34,
+        abi = "arm64-v8a",
+        buildId = "AP4A.250105.001",
+        fingerprint = "google/shiba/shiba:14/AP4A.250105.001/123:user/release-keys"
+    )
+
     @Test
     fun `resolveMessage prefers explicit details`() {
         val capability = MetricCapability(
@@ -84,18 +94,99 @@ class MetricCapabilityModelsTest {
 
     @Test
     fun `device info round trip retains identity`() {
-        val info = DeviceInfo(
-            manufacturer = "Google",
-            model = "Pixel 8",
-            device = "shiba",
-            sdkInt = 34,
-            abi = "arm64-v8a",
-            buildId = "AP4A.250105.001",
-            fingerprint = "google/shiba/shiba:14/AP4A.250105.001/123:user/release-keys"
+        val payload = json.encodeToString(device)
+        val decoded = Json.decodeFromString<DeviceInfo>(payload)
+        assertEquals(device, decoded)
+    }
+
+    @Test
+    fun `probe classifies supported metrics`() {
+        val report = MetricCapabilityProbe().report(
+            targetPackage = "dev.egarcia.andperf.compose",
+            environment = ProbeEnvironment(deviceInfo = device),
+            requirements = listOf(MetricRequirements.Startup, MetricRequirements.FrameTiming)
         )
 
-        val payload = json.encodeToString(info)
-        val decoded = Json.decodeFromString<DeviceInfo>(payload)
-        assertEquals(info, decoded)
+        assertEquals(listOf(MetricType.STARTUP, MetricType.FRAME_TIMING), report.requested)
+        assertEquals(listOf(MetricType.STARTUP, MetricType.FRAME_TIMING), report.available)
+        assertTrue(report.skipped.isEmpty())
+        assertTrue(report.humanReadableSummary().contains("skipped=none"))
+    }
+
+    @Test
+    fun `probe classifies unsupported metrics when sdk is too old`() {
+        val oldDevice = device.copy(sdkInt = 22)
+        val report = MetricCapabilityProbe().report(
+            targetPackage = "dev.egarcia.andperf.view",
+            environment = ProbeEnvironment(deviceInfo = oldDevice),
+            requirements = listOf(MetricRequirements.Startup, MetricRequirements.FrameTiming)
+        )
+
+        assertTrue(report.available.isEmpty())
+        assertEquals(listOf(MetricType.STARTUP, MetricType.FRAME_TIMING), report.skipped.map { it.metric })
+        assertEquals(AvailabilityReason.OS_TOO_OLD, report.skipped.first().reason)
+        assertTrue(report.skipped.first().message.contains("Requires API 23+"))
+    }
+
+    @Test
+    fun `probe preserves explicit unsupported probe result`() {
+        val probe = MetricCapabilityProbe(
+            probeOverrides = mapOf(
+                MetricType.FRAME_TIMING to {
+                    MetricCapability(
+                        metric = MetricType.FRAME_TIMING,
+                        supported = false,
+                        reason = AvailabilityReason.NO_DATA_COLLECTED,
+                        details = "Dry-run probe produced no frame samples."
+                    )
+                }
+            )
+        )
+
+        val report = probe.report(
+            targetPackage = "dev.egarcia.andperf.view",
+            environment = ProbeEnvironment(deviceInfo = device),
+            requirements = listOf(MetricRequirements.Startup, MetricRequirements.FrameTiming)
+        )
+
+        assertEquals(listOf(MetricType.STARTUP), report.available)
+        assertEquals(MetricType.FRAME_TIMING, report.skipped.single().metric)
+        assertEquals(AvailabilityReason.NO_DATA_COLLECTED, report.skipped.single().reason)
+    }
+
+    @Test
+    fun `probe converts runtime errors to skipped capabilities`() {
+        val probe = MetricCapabilityProbe(
+            probeOverrides = mapOf(
+                MetricType.FRAME_TIMING to { throw IllegalStateException("probe failed") }
+            )
+        )
+
+        val report = probe.report(
+            targetPackage = "dev.egarcia.andperf.view",
+            environment = ProbeEnvironment(deviceInfo = device),
+            requirements = listOf(MetricRequirements.FrameTiming)
+        )
+
+        assertTrue(report.available.isEmpty())
+        assertEquals(AvailabilityReason.RUNTIME_ERROR, report.skipped.single().reason)
+        assertEquals("probe failed", report.skipped.single().message)
+    }
+
+    @Test
+    fun `capability report serializes requested and skipped metadata`() {
+        val report = MetricCapabilityProbe().report(
+            targetPackage = "dev.egarcia.andperf.compose",
+            environment = ProbeEnvironment(deviceInfo = device.copy(sdkInt = 22)),
+            requirements = listOf(MetricRequirements.Startup)
+        )
+
+        val payload = json.encodeToString(report)
+        assertTrue(payload.contains("\"targetPackage\":\"dev.egarcia.andperf.compose\""))
+        assertTrue(payload.contains("\"requested\":[\"startup\"]"))
+        assertTrue(payload.contains("\"reason\":\"os_too_old\""))
+
+        val decoded = Json.decodeFromString<MetricCapabilityReport>(payload)
+        assertEquals(report, decoded)
     }
 }
