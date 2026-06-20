@@ -60,6 +60,8 @@ android {
 kotlin { jvmToolchain(17) }
 
 dependencies {
+    implementation(project(":shared"))
+
     // Use explicit coordinates so the test/runtime classpath contains the benchmark and test
     // libraries that the benchmark sources import (MacrobenchmarkRule, AndroidJUnit4, etc.).
     implementation(libs.benchmark.macro)
