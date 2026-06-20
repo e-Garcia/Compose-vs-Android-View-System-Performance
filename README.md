@@ -226,6 +226,7 @@ Future benchmark-result runs should either keep this text-only baseline document
    ./gradlew :app-compose:assembleRelease :app-view:assembleRelease :benchmark:assembleBenchmark
    ```
 3. Install and run benchmarks on connected physical device(s).
+<<<<<<< HEAD
 4. Export generated benchmark outputs from `benchmark/build/outputs/connected_android_test_additional_output/`, retain the raw artifacts, and add a curated summary or manifest under `results/` before comparing results.
 
 ---
