@@ -34,10 +34,10 @@ compose-vs-views/
  ├── app-compose/        → Jetpack Compose implementation
  ├── app-view/           → XML View + RecyclerView implementation
  ├── shared/             → Shared data models and fake repository
- ├── benchmark/          → AndroidX Macrobenchmark tests
- ├── results/            → Tracked benchmark result policy and curated summaries
- ├── benchmark/          → AndroidX Macrobenchmark test APK sources
- ├── results/            → JSON / CSV benchmark outputs
+|benchmark/          → AndroidX Macrobenchmark tests
+| ├── results/            → Tracked benchmark result policy and curated summaries
+| ├── benchmark/          → AndroidX Macrobenchmark test APK sources
+| ├── results/            → JSON / CSV benchmark outputs
  └── paper.md            → Research write-up (draft or published version)
 ```
 
@@ -226,7 +226,6 @@ Future benchmark-result runs should either keep this text-only baseline document
    ./gradlew :app-compose:assembleRelease :app-view:assembleRelease :benchmark:assembleBenchmark
    ```
 3. Install and run benchmarks on connected physical device(s).
-<<<<<<< HEAD
 4. Export generated benchmark outputs from `benchmark/build/outputs/connected_android_test_additional_output/`, retain the raw artifacts, and add a curated summary or manifest under `results/` before comparing results.
 
 ---
