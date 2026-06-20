@@ -204,6 +204,20 @@ The current checked-in apps share a deterministic, text-only dataset:
 
 Future benchmark-result runs should either keep this text-only baseline documented, or first update both implementations to an explicitly matched visual target. Planned parity items include matching row height, padding, typography, text structure, and any image-thumbnail/image-loader behavior before reporting Compose vs View frame/jank results.
 
+### Current row parity checklist
+
+The Compose `LazyColumn` row and View `RecyclerView` row are intentionally aligned before collecting benchmark results:
+
+| Row attribute | Compose implementation | View implementation |
+|---------------|------------------------|---------------------|
+| Container width | `fillMaxWidth()` | `layout_width="match_parent"` |
+| Container height | `56.dp` | `layout_height="56dp"` |
+| Container padding | `12.dp` | `android:padding="12dp"` |
+| Title text | Separate `Text`, `16.sp` | Separate `TextView`, `16sp` |
+| Subtitle text | Separate `Text`, `14.sp` | Separate `TextView`, `14sp` |
+
+Future image or thumbnail scenarios should be added to both implementations together, with matching decode size and loader behavior documented before publishing those measurements.
+
 ---
 
 ## 🧠 Research Goals
