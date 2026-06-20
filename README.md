@@ -35,6 +35,8 @@ compose-vs-views/
  ├── app-view/           → XML View + RecyclerView implementation
  ├── shared/             → Shared data models and fake repository
  ├── benchmark/          → AndroidX Macrobenchmark tests
+ ├── results/            → Tracked benchmark result policy and curated summaries
+ ├── benchmark/          → AndroidX Macrobenchmark test APK sources
  ├── results/            → JSON / CSV benchmark outputs
  └── paper.md            → Research write-up (draft or published version)
 ```
@@ -60,6 +62,20 @@ compose-vs-views/
 | **Network** | Off (airplane mode) |
 | **Thermal state** | Cooled device (25–35 °C) before each run |
 
+### Benchmark source sets
+
+The `benchmark` module uses the Android Gradle Plugin `com.android.test` plugin.
+Its runnable Macrobenchmark classes live in the module's main source set:
+
+- `benchmark/src/main/java/dev/egarcia/andperf/benchmark/ComposeViewBenchmarks.kt`
+- `benchmark/src/main/java/dev/egarcia/andperf/benchmark/SmokeBenchmark.kt`
+
+Do not add duplicate benchmark classes with the same package and class name under
+`benchmark/src/androidTest/`; the benchmark APK is assembled from the module's
+variant sources (for example `assembleBenchmark` / `assembleAndroidTest`), and
+keeping one source-set owner avoids ambiguous documentation and duplicate test
+definitions.
+
 ### Test Workflow
 
 1. Build and (optionally) install the benchmark and tested apps. Prefer non-debuggable/release-like APKs for accurate results:
@@ -77,20 +93,22 @@ compose-vs-views/
    ```bash
    # Simple run without specifying a device serial (works when only one device is connected)
    ./gradlew :benchmark:connectedBenchmarkAndroidTest \
+     -PbenchmarkTarget=:app-compose \
      -Pandroid.testInstrumentationRunnerArguments.benchmarkTargetPackage=dev.egarcia.andperf.compose \
      -Pandroid.testInstrumentationRunnerArguments.class=dev.egarcia.andperf.benchmark.ComposeViewBenchmarks#coldStartup_compose \
      --info --stacktrace
    
    # Run the corresponding View cold-start benchmark (explicit serial)
    ./gradlew :benchmark:connectedBenchmarkAndroidTest \
+     -PbenchmarkTarget=:app-view \
      -Pandroid.testInstrumentationRunnerArguments.serial=ABCD12BB3AB \
      -Pandroid.testInstrumentationRunnerArguments.benchmarkTargetPackage=dev.egarcia.andperf.view \
      -Pandroid.testInstrumentationRunnerArguments.class=dev.egarcia.andperf.benchmark.ComposeViewBenchmarks#coldStartup_view \
      --info --stacktrace
 
    # Or run both sequentially in your shell (keeps outputs separate)
-   ./gradlew :benchmark:connectedBenchmarkAndroidTest -Pandroid.testInstrumentationRunnerArguments.benchmarkTargetPackage=dev.egarcia.andperf.compose -Pandroid.testInstrumentationRunnerArguments.class=dev.egarcia.andperf.benchmark.ComposeViewBenchmarks#coldStartup_compose --info --stacktrace && \
-   ./gradlew :benchmark:connectedBenchmarkAndroidTest -Pandroid.testInstrumentationRunnerArguments.benchmarkTargetPackage=dev.egarcia.andperf.view -Pandroid.testInstrumentationRunnerArguments.class=dev.egarcia.andperf.benchmark.ComposeViewBenchmarks#coldStartup_view --info --stacktrace
+   ./gradlew :benchmark:connectedBenchmarkAndroidTest -PbenchmarkTarget=:app-compose -Pandroid.testInstrumentationRunnerArguments.benchmarkTargetPackage=dev.egarcia.andperf.compose -Pandroid.testInstrumentationRunnerArguments.class=dev.egarcia.andperf.benchmark.ComposeViewBenchmarks#coldStartup_compose --info --stacktrace && \
+   ./gradlew :benchmark:connectedBenchmarkAndroidTest -PbenchmarkTarget=:app-view -Pandroid.testInstrumentationRunnerArguments.benchmarkTargetPackage=dev.egarcia.andperf.view -Pandroid.testInstrumentationRunnerArguments.class=dev.egarcia.andperf.benchmark.ComposeViewBenchmarks#coldStartup_view --info --stacktrace
    ```
    
    Note: passing the device serial is optional
@@ -98,9 +116,20 @@ compose-vs-views/
    - It becomes required when multiple devices are attached or when you need deterministic selection (CI).
    - Also note the `--info` and `--stacktrace` flags are optional diagnostic flags (use them for more logging or on failures).
 
-   Note: some projects provide a convenience task (for example `runAllBenchmarks`) — check your `build.gradle.kts` for such wrappers; if present you can run it like:
+   Note: this project also provides convenience tasks for target-specific benchmark runs:
    ```bash
-   ./gradlew runAllBenchmarks --info --stacktrace
+   # Verify task wiring without requiring a device.
+   bash ./gradlew runBenchmarkComposeClass --dry-run
+   bash ./gradlew runBenchmarkViewClass --dry-run
+
+   # Run one default cold-start method against each intended app package.
+   bash ./gradlew runBenchmarkComposeClass --info --stacktrace
+   bash ./gradlew runBenchmarkViewClass --info --stacktrace
+
+   # Override the class/method while preserving the target app/package wiring.
+   bash ./gradlew runBenchmarkViewClass \
+     -PbenchmarkClass=dev.egarcia.andperf.benchmark.ComposeViewBenchmarks#scroll_view \
+     --info --stacktrace
    ```
 
 3. Where to find results and traces
@@ -127,9 +156,9 @@ compose-vs-views/
    adb pull /sdcard/Android/media/dev.egarcia.andperf.benchmark/additional_test_output ./benchmark/build/outputs/connected_android_test_additional_output/
    ```
 
-5. Aggregate and analyze
+5. Preserve, aggregate, and analyze
 
-   Collect the JSON/CSV outputs from the additional output directory or use the HTML report to inspect per-test timings, then aggregate medians/p90/p95 for final analysis.
+   Keep generated build artifacts out of Git. For each verified physical-device run, copy only curated summaries/manifests into `results/` and record where the raw JSON, HTML, and perfetto artifacts were retained. See [`results/README.md`](results/README.md) for the artifact policy.
 
 ---
 
@@ -162,25 +191,18 @@ compose-vs-views/
 
 ## 🔬 Implementation Details
 
-### Current checked-in baseline
+### Current text-only baseline
 
-Both implementations currently use:
-- Identical generated data from `FakeRepo.items(count = 1000)`.
-- Identical shared model fields: `Item(id, title, subtitle)`.
-- Text-only rows with title/subtitle content and no network access.
-- Compose `LazyColumn` in `app-compose` and View `RecyclerView` in `app-view`.
-- Startup benchmark methods for `dev.egarcia.andperf.compose` and
-  `dev.egarcia.andperf.view`.
+The current checked-in apps share a deterministic, text-only dataset:
+- Shared data model: `Item(id, title, subtitle)`.
+- `FakeRepo.items()` generates 1,000 rows by default with titles and subtitles only; it does not load images or perform network requests.
+- The Compose app renders the list with `LazyColumn` and a single `Text` containing both title and subtitle.
+- The View app renders the list with `RecyclerView` and `item_row.xml`, currently a `56dp` row with `12dp` padding and separate title/subtitle `TextView`s (`16sp` and `14sp`).
+- Release/build configuration parity should be verified before publishing measurements.
 
-### Intended research target
+### Planned visual-parity target
 
-Before publishing final conclusions, the project should either implement or
-explicitly document any intentionally omitted parity targets, including:
-- Fixed row heights and matching layout dimensions across Compose and View.
-- Shared fonts, paddings, typographic scales, and visual hierarchy.
-- Optional local thumbnails/images and identical decode/loading behavior.
-- Comparable build and compilation settings for both app variants.
-- Retained benchmark artifacts that support every reported number.
+Future benchmark-result runs should either keep this text-only baseline documented, or first update both implementations to an explicitly matched visual target. Planned parity items include matching row height, padding, typography, text structure, and any image-thumbnail/image-loader behavior before reporting Compose vs View frame/jank results.
 
 ---
 
@@ -204,10 +226,8 @@ explicitly document any intentionally omitted parity targets, including:
    ./gradlew :app-compose:assembleRelease :app-view:assembleRelease :benchmark:assembleBenchmark
    ```
 3. Install and run benchmarks on connected physical device(s).
-4. Copy retained raw outputs into a documented `results/` subdirectory before
-   adding numeric summaries to this README.
-5. Compare using your favorite data-analysis tool, citing the artifact path for
-   every published number.
+<<<<<<< HEAD
+4. Export generated benchmark outputs from `benchmark/build/outputs/connected_android_test_additional_output/`, retain the raw artifacts, and add a curated summary or manifest under `results/` before comparing results.
 
 ---
 
