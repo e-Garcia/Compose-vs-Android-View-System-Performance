@@ -1,15 +1,29 @@
 # Compose vs Android View System Performance Benchmark
 
-A quantitative, open research project comparing **Jetpack Compose** and the **traditional Android View system** under identical UI, dataset, and runtime conditions.  
-The goal is to measure and analyze real-device performance differences using reproducible, open benchmarks powered by **AndroidX Macrobenchmark**.
+A quantitative, open research project comparing **Jetpack Compose** and the
+**traditional Android View system** under controlled UI, dataset, and runtime
+conditions.
+
+The current checked-in baseline is intentionally small: it compares a
+Compose `LazyColumn` against an Android View `RecyclerView`, each rendering the
+same generated text-only dataset. The long-term research target is to evolve
+that baseline into stricter visual parity, richer rows, and retained
+device-verified benchmark artifacts before publishing numeric conclusions.
 
 ---
 
 ## 📖 Abstract
 
-This study evaluates the rendering performance of Jetpack Compose compared to the legacy Android View system when displaying equivalent user interfaces and datasets.  
-Benchmarks include cold startup time, first frame latency, jank during fast scrolling, and frame time percentiles (p50, p90, p95, p99).  
-All measurements are executed on real physical devices using automated macrobenchmarks to ensure reproducibility and scientific rigor.
+This study evaluates the rendering performance of Jetpack Compose compared to
+the legacy Android View system when displaying equivalent user interfaces and
+datasets. The source currently contains startup-focused AndroidX
+Macrobenchmark tests for both app variants and includes `FrameTimingMetric()`
+where supported by the runtime.
+
+Planned benchmark coverage includes cold startup, first frame latency, jank
+during fast scrolling, and frame time percentiles (p50, p90, p95, p99). Numeric
+results should only be added after the raw JSON/HTML/perfetto outputs are
+retained under documented device and run conditions.
 
 ---
 
@@ -20,8 +34,10 @@ compose-vs-views/
  ├── app-compose/        → Jetpack Compose implementation
  ├── app-view/           → XML View + RecyclerView implementation
  ├── shared/             → Shared data models and fake repository
- ├── benchmark/          → AndroidX Macrobenchmark test APK sources
- ├── results/            → JSON / CSV benchmark outputs
+|benchmark/          → AndroidX Macrobenchmark tests
+| ├── results/            → Tracked benchmark result policy and curated summaries
+| ├── benchmark/          → AndroidX Macrobenchmark test APK sources
+| ├── results/            → JSON / CSV benchmark outputs
  └── paper.md            → Research write-up (draft or published version)
 ```
 
@@ -32,13 +48,16 @@ compose-vs-views/
 | Aspect | Description |
 |--------|--------------|
 | **Frameworks compared** | Jetpack Compose (LazyColumn) vs Android Views (RecyclerView) |
-| **Test tool** | AndroidX Macrobenchmark v1.2.4 |
-| **Metrics** | Cold startup, First frame latency, Scroll jank, Frame time percentiles |
+| **Test tool** | AndroidX Macrobenchmark via the version catalog (`androidx.benchmark`) |
+| **Current metrics** | Startup timing; frame timing when the device/runtime produces frame samples |
+| **Planned metrics** | Cold startup, first frame latency, scroll jank, frame time percentiles, optional memory |
 | **Devices** | _(List your test devices)_ |
 | **Android versions** | _(e.g., Android 13, 14)_ |
-| **Iterations per metric** | 10 per app per compilation mode |
-| **Build type** | Release build, R8 minified, identical ProGuard rules |
-| **Compilation modes** | None, Partial |
+| **Current iterations** | 3 per checked-in startup benchmark |
+| **Target iterations** | 10 per app per compilation mode before publishing results |
+| **Current build type** | Benchmark variants signed with debug signing; release-like measurement setup still needs validation |
+| **Target build type** | Release or release-like builds, R8 minified where appropriate, identical ProGuard rules |
+| **Compilation modes** | Planned: None, Partial |
 | **Animation settings** | All animations disabled (Developer Options) |
 | **Network** | Off (airplane mode) |
 | **Thermal state** | Cooled device (25–35 °C) before each run |
@@ -74,20 +93,22 @@ definitions.
    ```bash
    # Simple run without specifying a device serial (works when only one device is connected)
    ./gradlew :benchmark:connectedBenchmarkAndroidTest \
+     -PbenchmarkTarget=:app-compose \
      -Pandroid.testInstrumentationRunnerArguments.benchmarkTargetPackage=dev.egarcia.andperf.compose \
      -Pandroid.testInstrumentationRunnerArguments.class=dev.egarcia.andperf.benchmark.ComposeViewBenchmarks#coldStartup_compose \
      --info --stacktrace
    
    # Run the corresponding View cold-start benchmark (explicit serial)
    ./gradlew :benchmark:connectedBenchmarkAndroidTest \
+     -PbenchmarkTarget=:app-view \
      -Pandroid.testInstrumentationRunnerArguments.serial=ABCD12BB3AB \
      -Pandroid.testInstrumentationRunnerArguments.benchmarkTargetPackage=dev.egarcia.andperf.view \
      -Pandroid.testInstrumentationRunnerArguments.class=dev.egarcia.andperf.benchmark.ComposeViewBenchmarks#coldStartup_view \
      --info --stacktrace
 
    # Or run both sequentially in your shell (keeps outputs separate)
-   ./gradlew :benchmark:connectedBenchmarkAndroidTest -Pandroid.testInstrumentationRunnerArguments.benchmarkTargetPackage=dev.egarcia.andperf.compose -Pandroid.testInstrumentationRunnerArguments.class=dev.egarcia.andperf.benchmark.ComposeViewBenchmarks#coldStartup_compose --info --stacktrace && \
-   ./gradlew :benchmark:connectedBenchmarkAndroidTest -Pandroid.testInstrumentationRunnerArguments.benchmarkTargetPackage=dev.egarcia.andperf.view -Pandroid.testInstrumentationRunnerArguments.class=dev.egarcia.andperf.benchmark.ComposeViewBenchmarks#coldStartup_view --info --stacktrace
+   ./gradlew :benchmark:connectedBenchmarkAndroidTest -PbenchmarkTarget=:app-compose -Pandroid.testInstrumentationRunnerArguments.benchmarkTargetPackage=dev.egarcia.andperf.compose -Pandroid.testInstrumentationRunnerArguments.class=dev.egarcia.andperf.benchmark.ComposeViewBenchmarks#coldStartup_compose --info --stacktrace && \
+   ./gradlew :benchmark:connectedBenchmarkAndroidTest -PbenchmarkTarget=:app-view -Pandroid.testInstrumentationRunnerArguments.benchmarkTargetPackage=dev.egarcia.andperf.view -Pandroid.testInstrumentationRunnerArguments.class=dev.egarcia.andperf.benchmark.ComposeViewBenchmarks#coldStartup_view --info --stacktrace
    ```
    
    Note: passing the device serial is optional
@@ -95,9 +116,20 @@ definitions.
    - It becomes required when multiple devices are attached or when you need deterministic selection (CI).
    - Also note the `--info` and `--stacktrace` flags are optional diagnostic flags (use them for more logging or on failures).
 
-   Note: some projects provide a convenience task (for example `runAllBenchmarks`) — check your `build.gradle.kts` for such wrappers; if present you can run it like:
+   Note: this project also provides convenience tasks for target-specific benchmark runs:
    ```bash
-   ./gradlew runAllBenchmarks --info --stacktrace
+   # Verify task wiring without requiring a device.
+   bash ./gradlew runBenchmarkComposeClass --dry-run
+   bash ./gradlew runBenchmarkViewClass --dry-run
+
+   # Run one default cold-start method against each intended app package.
+   bash ./gradlew runBenchmarkComposeClass --info --stacktrace
+   bash ./gradlew runBenchmarkViewClass --info --stacktrace
+
+   # Override the class/method while preserving the target app/package wiring.
+   bash ./gradlew runBenchmarkViewClass \
+     -PbenchmarkClass=dev.egarcia.andperf.benchmark.ComposeViewBenchmarks#scroll_view \
+     --info --stacktrace
    ```
 
 3. Where to find results and traces
@@ -124,21 +156,22 @@ definitions.
    adb pull /sdcard/Android/media/dev.egarcia.andperf.benchmark/additional_test_output ./benchmark/build/outputs/connected_android_test_additional_output/
    ```
 
-5. Aggregate and analyze
+5. Preserve, aggregate, and analyze
 
-   Collect the JSON/CSV outputs from the additional output directory or use the HTML report to inspect per-test timings, then aggregate medians/p90/p95 for final analysis.
+   Keep generated build artifacts out of Git. For each verified physical-device run, copy only curated summaries/manifests into `results/` and record where the raw JSON, HTML, and perfetto artifacts were retained. See [`results/README.md`](results/README.md) for the artifact policy.
 
 ---
 
-## 📊 Metrics Collected
+## 📊 Metrics Collected and Planned
 
 | Metric | Description |
 |---------|-------------|
-| **Cold Startup (ms)** | Time from process start until first frame rendered |
-| **First Frame Latency (ms)** | Delay before first visible frame on launch |
-| **Frame Time Percentiles (p50–p99)** | Frame render duration distribution during continuous scroll |
-| **Jank (%)** | Percentage of frames exceeding 16.6 ms |
-| **Memory (MB)** | Peak RSS during scroll (optional) |
+| **Cold Startup (ms)** | Current startup benchmark target; time from process start until first frame rendered |
+| **Frame timing samples** | Requested by current startup tests with `FrameTimingMetric()`; availability may vary by device/runtime |
+| **First Frame Latency (ms)** | Planned reporting field derived from startup output where supported |
+| **Frame Time Percentiles (p50–p99)** | Planned for continuous scroll benchmarks, not yet published as verified results |
+| **Jank (%)** | Planned for continuous scroll benchmarks, not yet published as verified results |
+| **Memory (MB)** | Optional future metric, not implemented in the current baseline |
 
 ---
 
@@ -158,13 +191,18 @@ definitions.
 
 ## 🔬 Implementation Details
 
-Both implementations use:
-- Identical data model (`Item(id, title, imageRes)`)
-- Fixed item height and layout dimensions
-- 1,000 locally cached image thumbnails (no network)
-- Shared fonts, paddings, and typographic scales
-- Same image loader and bitmap decode size
-- Identical release build configurations
+### Current text-only baseline
+
+The current checked-in apps share a deterministic, text-only dataset:
+- Shared data model: `Item(id, title, subtitle)`.
+- `FakeRepo.items()` generates 1,000 rows by default with titles and subtitles only; it does not load images or perform network requests.
+- The Compose app renders the list with `LazyColumn` and a single `Text` containing both title and subtitle.
+- The View app renders the list with `RecyclerView` and `item_row.xml`, currently a `56dp` row with `12dp` padding and separate title/subtitle `TextView`s (`16sp` and `14sp`).
+- Release/build configuration parity should be verified before publishing measurements.
+
+### Planned visual-parity target
+
+Future benchmark-result runs should either keep this text-only baseline documented, or first update both implementations to an explicitly matched visual target. Planned parity items include matching row height, padding, typography, text structure, and any image-thumbnail/image-loader behavior before reporting Compose vs View frame/jank results.
 
 ---
 
@@ -188,7 +226,7 @@ Both implementations use:
    ./gradlew :app-compose:assembleRelease :app-view:assembleRelease :benchmark:assembleBenchmark
    ```
 3. Install and run benchmarks on connected physical device(s).
-4. Export results from `/results/` and compare using your favorite data-analysis tool.
+4. Export generated benchmark outputs from `benchmark/build/outputs/connected_android_test_additional_output/`, retain the raw artifacts, and add a curated summary or manifest under `results/` before comparing results.
 
 ---
 
