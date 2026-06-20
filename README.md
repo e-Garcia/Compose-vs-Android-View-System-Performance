@@ -144,13 +144,18 @@ compose-vs-views/
 
 ## 🔬 Implementation Details
 
-Both implementations use:
-- Identical data model (`Item(id, title, imageRes)`)
-- Fixed item height and layout dimensions
-- 1,000 locally cached image thumbnails (no network)
-- Shared fonts, paddings, and typographic scales
-- Same image loader and bitmap decode size
-- Identical release build configurations
+### Current text-only baseline
+
+The current checked-in apps share a deterministic, text-only dataset:
+- Shared data model: `Item(id, title, subtitle)`.
+- `FakeRepo.items()` generates 1,000 rows by default with titles and subtitles only; it does not load images or perform network requests.
+- The Compose app renders the list with `LazyColumn` and a single `Text` containing both title and subtitle.
+- The View app renders the list with `RecyclerView` and `item_row.xml`, currently a `56dp` row with `12dp` padding and separate title/subtitle `TextView`s (`16sp` and `14sp`).
+- Release/build configuration parity should be verified before publishing measurements.
+
+### Planned visual-parity target
+
+Future benchmark-result runs should either keep this text-only baseline documented, or first update both implementations to an explicitly matched visual target. Planned parity items include matching row height, padding, typography, text structure, and any image-thumbnail/image-loader behavior before reporting Compose vs View frame/jank results.
 
 ---
 
