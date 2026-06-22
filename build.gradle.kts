@@ -34,25 +34,6 @@ tasks.register("benchInstallAll") {
 // NOTE: the small helper `projectPathToPackage` was removed to avoid an unused-symbol warning.
 // If you need a mapping from project path to package in the future, re-add a minimal helper.
 
-// Convenience tasks to run a single benchmark test class for Compose or View.
-// They set the instrumentation runner arguments in the current Gradle invocation
-// via the extra properties so the :benchmark:connectedBenchmarkAndroidTest task picks them up.
-
-tasks.register("runBenchmarkComposeClass") {
-    group = "benchmark"
-    description = "Assemble/install :app-compose and run Compose benchmark class (sets instrumentation class & package)"
-    doFirst {
-        // Set instrumentation runner args as project properties for this invocation
-        project.extensions.extraProperties.set("android.testInstrumentationRunnerArguments.class", "dev.egarcia.andperf.benchmark.ComposeBenchmarks")
-        project.extensions.extraProperties.set("android.testInstrumentationRunnerArguments.benchmarkTargetPackage", "dev.egarcia.andperf.compose")
-        if (deviceSerial != null) {
-            project.extensions.extraProperties.set("android.testInstrumentationRunnerArguments.serial", deviceSerial)
-            logger.lifecycle("Passing serial to instrumentation runner: $deviceSerial")
-        }
-    }
-    dependsOn("assembleInstallCompose", ":benchmark:connectedBenchmarkAndroidTest")
-}
-
 fun projectPathToPackage(targetProject: String): String = when (targetProject) {
     ":app-compose" -> "dev.egarcia.andperf.compose"
     ":app-view" -> "dev.egarcia.andperf.view"
@@ -60,8 +41,8 @@ fun projectPathToPackage(targetProject: String): String = when (targetProject) {
 }
 
 fun testClassForTarget(targetProject: String): String = when (targetProject) {
-    ":app-compose" -> "dev.egarcia.andperf.benchmark.ComposeViewBenchmarks#coldStartup_compose"
-    ":app-view" -> "dev.egarcia.andperf.benchmark.ComposeViewBenchmarks#coldStartup_view"
+    ":app-compose" -> "dev.egarcia.andperf.benchmark.ComposeBenchmarks#coldStartup_compose"
+    ":app-view" -> "dev.egarcia.andperf.benchmark.ViewBenchmarks#coldStartup_view"
     else -> ""
 }
 
@@ -78,6 +59,7 @@ fun buildBenchmarkCmd(targetProject: String, singleClassOnly: Boolean = false): 
     if (testClass.isNotBlank()) {
         cmd.add("-Pandroid.testInstrumentationRunnerArguments.class=$testClass")
     }
+    return cmd
 }
 
 tasks.register<Exec>("runBenchmarkComposeClass") {
@@ -111,22 +93,26 @@ tasks.register<Exec>("runBenchmarkViewClass") {
 tasks.register("runBenchmarkCompose") {
     group = "benchmark"
     description = "Assemble/install :app-compose then run compose benchmarks"
-    dependsOn("assembleInstallCompose", "benchmarkComposeRun")
+    dependsOn("assembleInstallCompose", ":benchmark:benchmarkComposeRun")
 }
 
 tasks.register("runBenchmarkView") {
     group = "benchmark"
     description = "Assemble/install :app-view then run view benchmarks"
-    dependsOn("assembleInstallView", "benchmarkViewRun")
+    dependsOn("assembleInstallView", ":benchmark:benchmarkViewRun")
 }
 
 tasks.register("runAllBenchmarks") {
     group = "benchmark"
     description = "Install both apps then run benchmarks for :app-compose then :app-view sequentially"
-    dependsOn("benchInstallAll", "benchmarkComposeRun", "benchmarkViewRun")
+    dependsOn("benchInstallAll", ":benchmark:benchmarkComposeRun", ":benchmark:benchmarkViewRun")
 }
 
-// enforce ordering so installs happen before running benchmarks
-tasks.named("benchmarkComposeRun").configure { mustRunAfter("benchInstallAll") }
-// enforce ordering: run view after compose
-tasks.named("benchmarkViewRun").configure { mustRunAfter("benchmarkComposeRun") }
+// enforce ordering so installs happen before running benchmarks (conditional: only if the Macrobenchmark plugin provides these tasks)
+try {
+    tasks.named(":benchmark:benchmarkComposeRun").configure { mustRunAfter("benchInstallAll") }
+} catch (e: UnknownTaskException) {}
+// enforce ordering: run view after compose (conditional)
+try {
+    tasks.named(":benchmark:benchmarkViewRun").configure { mustRunAfter("benchmarkComposeRun") }
+} catch (e: UnknownTaskException) {}
