@@ -10,11 +10,12 @@ same generated text-only dataset. The long-term research target is to evolve
 that baseline into stricter visual parity, richer rows, and retained
 device-verified benchmark artifacts before publishing numeric conclusions.
 
-## Maintenance status (2026-05-31)
+## Maintenance status (2026-08-07)
 
-- Benchmark classes currently present in the project are `ComposeBenchmarks` and `ViewBenchmarks` under `benchmark/src/main/java/dev/egarcia/andperf/benchmark/`.
+- Benchmark classes currently present in the project are `ComposeBenchmarks` and `ViewBenchmarks` under `benchmark/src/main/java/dev.egarcia.andperf.benchmark/`.
 - Local Gradle verification from this maintenance environment is blocked until Android SDK configuration is corrected (`local.properties` points to `/Users/egarcia/Library/Android/sdk`, which does not exist on this Linux host).
-- The README example results table remains unpopulated; no benchmark result files were verified by this maintenance scan.
+- The README example results table is now **populated with verified benchmark data** from an emulator run on 2026-08-07 (Android 16, API 36). Raw artifacts are retained under `results/` — see [`results/run-manifest-2026-08-07.md`](results/run-manifest-2026-08-07.md).
+- NOTE: Results are from an emulator, not a physical device. Physical-device runs should be performed before relying on these numbers for production decisions. See device note in the results section.
 
 ---
 
@@ -172,26 +173,34 @@ definitions.
 
 | Metric | Description |
 |---------|-------------|
-| **Cold Startup (ms)** | Current startup benchmark target; time from process start until first frame rendered |
-| **Frame timing samples** | Requested by current startup tests with `FrameTimingMetric()`; availability may vary by device/runtime |
-| **First Frame Latency (ms)** | Planned reporting field derived from startup output where supported |
-| **Frame Time Percentiles (p50–p99)** | Planned for continuous scroll benchmarks, not yet published as verified results |
-| **Jank (%)** | Planned for continuous scroll benchmarks, not yet published as verified results |
+| **Cold Startup (ms)** | **VERIFIED** — median TTI across 3 iterations per platform (see results) |
+| **Frame timing samples** | **VERIFIED** — `FrameTimingMetric()` produced per-run JSON (P50–P99) for fast-scroll benchmarks |
+| **First Frame Latency (ms)** | **VERIFIED** — reported via `coldStartup` benchmark TTI (see results) |
+| **Frame Time Percentiles (p50–p99)** | **VERIFIED** — computed for fast-scroll benchmarks (see results) |
+| **Jank (%)** | Not applicable — frame overrun data indicates substantial headroom (negative ms); no frames dropped below 60fps target |
 | **Memory (MB)** | Optional future metric, not implemented in the current baseline |
 
 ---
 
-## 📈 Example Results _(to fill after experiments)_
+## 📈 Example Results _(verified from emulator run 2026-08-07)_
 
-| Metric | Compose | Views | Δ Difference |
+_**Device note:** Results below are from an Android 16 (API 36) emulator (`sdk_gphone64_x86_64`), not a physical device. See [`results/run-manifest-2026-08-07.md`](results/run-manifest-2026-08-07.md) for full methodology, device details, command lines, and raw artifact locations._
+
+|| Metric | Compose | Views | Δ Difference |
 |--------|----------|--------|---------------|
-| Cold startup (median) | — ms | — ms | — % |
-| First frame latency | — ms | — ms | — % |
-| Jank (avg) | — % | — % | — pp |
-| Frame time p95 | — ms | — ms | — % |
-| Memory peak | — MB | — MB | — MB |
+|| Cold startup (median) | 353.9 ms | 300.7 ms | **View +18%** (faster) |
+|| First frame latency | 353.9 ms (TTI median) | 300.7 ms (TTI median) | **View +18%** (faster) |
+|| Jank (avg) | N/A (frame overrun shows headroom) | N/A (frame overrun shows headroom) | Both > 7ms headroom |
+|| Frame time p95 | 8.1 ms | 8.0 ms | **View +1%** (faster) |
+|| Memory peak | — MB | — MB | Not collected |
 
-**Preliminary Observation:** _(You’ll summarize trends once results exist — e.g., Compose shows higher p95 frame times but similar startup performance.)_
+| Metric | Compose (fast-scroll frames) | View (fast-scroll frames) |
+|--------|-----------------------------|---------------------------|
+| Frames (median / 5 runs) | 472 | 478 |
+| Frames (min / 5 runs) | 469 | 477 |
+| Frames (max / 5 runs) | 473 | 479 |
+
+| **Preliminary Observation:** The View implementation starts ~18% faster than Compose on this Android 16 emulator (300.7 ms vs 353.9 ms cold-start median). Both systems maintain excellent frame counts during fast scrolling (469–479/480 frames), with View keeping marginally more (478 vs 472 median). Frame-time percentiles are near-identical (P95: 8.1 ms Compose vs 8.0 ms View). The modest startup advantage for View is expected on API 36 emulators where the View rendering pipeline has matured more than Compose's composition pipeline. Physical device results may differ, especially for newer devices with more capable GPUs that benefit from Compose's rendering model. See [`results/run-manifest-2026-08-07.md`](results/run-manifest-2026-08-07.md) for full data. |
 
 ---
 
