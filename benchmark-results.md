@@ -1,59 +1,146 @@
-# Compose vs Android View — Benchmark Results
+# Benchmark Results — Compose vs Android View Performance
 
-> **Emulator only.** Results from Android 16 emulator (Pixel 8, API 36, SwiftShader software rendering).
-> Do **not** use for production comparisons — see disclaimer below.
+> **Device:** sdk_gphone64_x86_64 (Android 16, API 36, Emulator)
+> **CPU:** 4 cores @ 2GHz, 2GB RAM
+> **Date:** 2026-07-23
+> **Test harness:** AndroidX Benchmark Macrobenchmark (Jitpack)
+> **Note:** Running on an emulator is not representative of real device performance. Results here are for development iteration — physical device benchmarks are required for production-grade conclusions.
 
-## Cold Startup — timeToInitialDisplayMs
+---
 
-| Metric | Compose (cold) | View (cold) |
-|--------|---------------|-------------|
-| min    | 330.7 ms      | **255.0 ms**  |
-| median | 333.1 ms      | **262.1 ms**  |
-| max    | 433.1 ms      | **274.3 ms**  |
+## Setup
 
-## View Bonus — Frame Render Metrics (Compose only)
+| Parameter | Value |
+|-----------|-------|
+| Target SDK | Android 16 (API 36) |
+| Device | sdk_gphone64_x86_64 (x86_64 emulator) |
+| UI Frameworks | Jetpack Compose (latest) vs Android Views (RecyclerView) |
+| Benchmark library | androidx.benchmark:benchmark-macro-junit4 |
+| Iterations | 3 (cold-start), 5 (fast-scroll) |
+| Startup mode | COLD (process killed before each run) |
+| Emulator | Generic AVD (Android 16, x86_64) |
 
-| Metric | Value |
-|--------|-------|
-| frameCount (all iterations) | 1.0 (single frame) |
-| frameDurationCpu — P50 | 154.1 ms |
-| frameDurationCpu — P90 | 154.9 ms |
-| frameDurationCpu — P95 | 155.0 ms |
-| frameDurationCpu — P99 | 155.1 ms |
-| frameOverrunMs — P50 | 222.0 ms |
-| frameOverrunMs — P90 | 227.4 ms |
-| frameOverrunMs — P95 | 228.1 ms |
-| frameOverrunMs — P99 | 228.6 ms |
+### Test Matrix
 
-## Notes
+| Benchmark | UI Framework | Startup | Scroll Items | Metrics |
+|-----------|-------------|---------|-------------|---------|
+| coldStartup | Compose (LazyColumn) | Cold | 56 scrollable items | StartupTiming, FrameTiming |
+| coldStartup | Android View (RecyclerView) | Cold | 56 scrollable items | StartupTiming, FrameTiming |
+| fastScroll | Compose (LazyColumn) | WARM | 500 scrollable items | FrameTiming |
+| fastScroll | Android View (RecyclerView) | WARM | 500 scrollable items | FrameTiming |
+| Smoke | Compose (LazyColumn) | Cold | 56 scrollable items | StartupTiming (smoke) |
 
-- Device: `sdk_gphone64_x86_64` (Pixel 8 emulation), Android 16 (API 36)
-- GPU: SwiftShader (software rendering) — **does not represent real hardware**
-- Compose shows P50 frameDurationCpu of 154ms; View frame metrics not captured in separate run
-- 3 iterations per benchmark; `perfetto-trace` files saved in `benchmark/build/outputs/connected_android_test_additional_output/`
-- The `timeToInitialDisplay` metric measures the time from process start to the first frame being drawn to screen
+---
 
-## ⚠️ Disclaimer
+## Cold Start Comparison (Fixed)
 
-> **These results are from an emulator with software rendering.**
-> Real device benchmarks may show different relative performance between Compose and View.
-> Software-rendered CPU costs on an emulator do **not** accurately reflect GPU-accelerated
-> performance on a physical Pixel or any Android phone. Use with caution —
-> the relative ranking (View ~22% faster cold-start on this emulator) is not guaranteed
-> to hold on real hardware.
+### ⚠️ IMPORTANT: FrameTimingMetric Fix
 
-## Artifacts
+**Before fix:** `ViewBenchmarks.coldStartup_view()` used **only** `StartupTimingMetric` (no frame timing).
+**After fix:** Both frameworks now measure **`StartupTimingMetric` + `FrameTimingMetric`** for an apples-to-apples comparison.
 
-Perfection trace files from each run:
+---
 
-| Benchmark | File |
-|-----------|------|
-| Compose iter 0 | `ComposeBenchmarks_coldStartup_compose_iter000_2026-06-22-18-19-06.perfetto-trace` |
-| Compose iter 1 | `ComposeBenchmarks_coldStartup_compose_iter001_2026-06-22-18-19-08.perfetto-trace` |
-| Compose iter 2 | `ComposeBenchmarks_coldStartup_compose_iter002_2026-06-22-18-19-10.perfetto-trace` |
-| View iter 0 | `ViewBenchmarks_coldStartup_view_iter000_2026-06-22-18-21-00.perfetto-trace` |
-| View iter 1 | `ViewBenchmarks_coldStartup_view_iter001_2026-06-22-18-21-02.perfetto-trace` |
-| View iter 2 | `ViewBenchmarks_coldStartup_view_iter002_2026-06-22-18-21-03.perfetto-trace` |
+### Cold Start: timeToInitialDisplayMs (ms)
 
-All located under:
-`benchmark/build/outputs/connected_android_test_additional_output/benchmark/connected/Reldoc_API36_1(AVD) - 16/`
+| Benchmark | min | **median** | max |
+|-----------|------|-----------|------|
+| **View (RecyclerView)** | 302.8 | **380.0** | 426.7 |
+| **Compose (LazyColumn)** | 499.2 | **669.9** | 1097.8 |
+| **Smoke (Compose)** | 560.9 | 985.1 | 1196.7 |
+
+> ✅ **View is ~35% faster** on cold-start median (380ms vs 670ms) on this emulator run.
+
+---
+
+### Cold Start: Frame Duration (P50 / P90 / P95 / P99) — CPU
+
+| Benchmark | P50 | P90 | P95 | P99 |
+|-----------|------|------|------|------|
+| **View (RecyclerView)** | 198.3 | 207.6 | 208.8 | 209.7 |
+| **Compose (LazyColumn)** | 222.5 | 337.6 | 352.0 | 363.6 |
+| **Smoke (Compose)** | 108.2 | 282.5 | 294.7 | 304.5 |
+
+> ✅ **View has lower P90/P95 frame durations** during cold start. Compose shows higher tail latencies (P90 = 337ms vs View's 208ms).
+
+---
+
+### Cold Start: Frame Overrun (P50 / P90 / P95 / P99) — CPU
+
+| Benchmark | P50 | P90 | P95 | P99 |
+|-----------|------|------|------|------|
+| **View (RecyclerView)** | 253.1 | 270.2 | 272.3 | 274.0 |
+| **Compose (LazyColumn)** | 256.6 | 329.9 | 344.6 | 356.4 |
+| **Smoke (Compose)** | 147.7 | 373.8 | 400.7 | 422.3 |
+
+> ✅ **View has lower tail frame overrun** during cold start (P50 = 253ms vs Compose's 257ms — but with lower P90/P95).
+
+---
+
+## Fast Scroll (Warm Start) — 500 Items
+
+| Benchmark | Frames | Frame P50 (ms) | Frame P90 (ms) | Frame P95 (ms) | Frame P99 (ms) |
+|-----------|--------|---------------|---------------|---------------|---------------|
+| **Compose (LazyColumn)** | 481–492 | 7.5 | 17.6 | 22.7 | 40.6 |
+| **View (RecyclerView)** | 467–483 | 6.9 | 18.8 | 22.6 | 42.5 |
+| | | | | | |
+
+> 📌 **Close call in fast scroll!** View edges out on P50 (6.9ms vs 7.5ms). P90/P95 are essentially identical. Both perform excellently at scroll — no meaningful differentiator.
+
+---
+
+## Smoke Test (Compose Only)
+
+| Metric | min | median | max |
+|--------|------|--------|------|
+| Time to Initial Display | 560.9 | 985.1 | 1196.7 |
+| Frame P50 (ms) | — | 108.2 | — |
+| Frame Overrun P50 (ms) | — | 147.7 | — |
+
+---
+
+## Summary
+
+| Scenario | View (RecyclerView) | Compose (LazyColumn) | Verdict |
+|----------|--------------------|---------------------|---------|
+| **Cold Start (TTI)** | **~380ms** | ~670ms | ✅ **View ~35% faster** |
+| **Cold Start (P90 Frame)** | **~208ms** | ~338ms | ✅ **View smoother during cold** |
+| **Fast Scroll (P50)** | 6.9ms | 7.5ms | 📌 ~Equal (View marginally better) |
+| **Fast Scroll (P95)** | 22.6ms | 22.7ms | 📌 ~Identical |
+
+---
+
+## Changelog
+
+### 2026-07-23 — FrameTimingMetric Fix (Issue #1)
+
+**File modified:** `benchmark/src/main/java/dev/egarcia/andperf/benchmark/ViewBenchmarks.kt`
+
+**Before:**
+```kotlin
+metrics = listOf(StartupTimingMetric()),
+```
+
+**After:**
+```kotlin
+metrics = listOf(StartupTimingMetric(), FrameTimingMetric()),
+```
+
+**Impact:**
+- View benchmarks now include frame timing during cold start, matching Compose.
+- Previous results comparing **only** time-to-initial-display were incomplete — they showed View was faster, but couldn't prove *why* (frame delivery).
+- With frame metrics enabled: View shows both faster TTI **and** better P90/P95 frame durations during cold start, confirming the speed advantage.
+
+**Emulator verification:** All 5 tests passed on a generic API 36 emulator (Android 16, x86_64).
+
+---
+
+## TODO / Next Steps
+
+1. [ ] Run on **physical devices** (emulator results may not generalize to hardware)
+2. [ ] Increase iterations from 3 → 10+ for cold-start stability
+3. [ ] Add image-thumbnail scrolling benchmark (both frameworks)
+4. [ ] Add JVM unit tests estimating LazyColumn virtualization vs RecyclerView pool (ground-truth baseline)
+5. [ ] Implement capability-based metric routing (wiring `sanitizedMetricsForBenchmark()` into actual benchmark classes)
+6. [ ] Switch View's MainActivity to `ComponentActivity` (parity with Compose)
+7. [ ] Add power, thermal, memory, and network benchmarks (capability model already designed)
