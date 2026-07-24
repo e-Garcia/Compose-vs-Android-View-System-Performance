@@ -24,11 +24,11 @@
 
 | Benchmark | UI Framework | Startup | Scroll Items | Metrics |
 |-----------|-------------|---------|-------------|---------|
-| coldStartup | Compose (LazyColumn) | Cold | 56 scrollable items | StartupTiming, FrameTiming |
-| coldStartup | Android View (RecyclerView) | Cold | 56 scrollable items | StartupTiming, FrameTiming |
-| fastScroll | Compose (LazyColumn) | WARM | 500 scrollable items | FrameTiming |
-| fastScroll | Android View (RecyclerView) | WARM | 500 scrollable items | FrameTiming |
-| Smoke | Compose (LazyColumn) | Cold | 56 scrollable items | StartupTiming (smoke) |
+| coldStartup | Compose (LazyColumn) | Cold | 1000 scrollable items | StartupTiming, FrameTiming |
+| coldStartup | Android View (RecyclerView) | Cold | 1000 scrollable items | StartupTiming, FrameTiming |
+| fastScroll | Compose (LazyColumn) | WARM | 1000 scrollable items | FrameTiming |
+| fastScroll | Android View (RecyclerView) | WARM | 1000 scrollable items | FrameTiming |
+| Smoke | Compose (LazyColumn) | Cold | 1000 scrollable items | StartupTiming (smoke) |
 
 ---
 
