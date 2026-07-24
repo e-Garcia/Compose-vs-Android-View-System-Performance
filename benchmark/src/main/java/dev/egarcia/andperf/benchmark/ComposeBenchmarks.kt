@@ -2,9 +2,9 @@ package dev.egarcia.andperf.benchmark
 
 import androidx.benchmark.macro.FrameTimingMetric
 import androidx.benchmark.macro.StartupMode
-import androidx.benchmark.macro.StartupTimingMetric
 import androidx.benchmark.macro.junit4.MacrobenchmarkRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import dev.egarcia.andperf.shared.capability.MetricType
 import org.junit.Assume
 import org.junit.Rule
 import org.junit.Test
@@ -23,12 +23,11 @@ class ComposeBenchmarks {
         Assume.assumeTrue("Skipping test because target package $pkg is not installed", BenchmarkUtils.isPackageInstalled(pkg))
 
         try {
-            rule.measureRepeated(
+            rule.measureStartupWithCapabilityReport(
                 packageName = pkg,
-                metrics = listOf(StartupTimingMetric(), FrameTimingMetric()),
-                iterations = 3,
+                requestedMetrics = listOf(MetricType.STARTUP, MetricType.FRAME_TIMING),
                 startupMode = StartupMode.COLD,
-                measureBlock = { startActivityAndWait() }
+                iterations = 3
             )
         } catch (t: Throwable) {
             // Treat metric collection errors as skipped (device may not surface frame metrics)
