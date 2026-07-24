@@ -10,10 +10,9 @@ same generated text-only dataset. The long-term research target is to evolve
 that baseline into stricter visual parity, richer rows, and retained
 device-verified benchmark artifacts before publishing numeric conclusions.
 
-## Maintenance status (2026-08-07)
+## Maintenance status (2026-07-09, corrected 2026-07-23)
 
 - Benchmark classes currently present in the project are `ComposeBenchmarks` and `ViewBenchmarks` under `benchmark/src/main/java/dev.egarcia.andperf.benchmark/`.
-- Local Gradle verification from this maintenance environment is blocked until Android SDK configuration is corrected (`local.properties` points to `/Users/egarcia/Library/Android/sdk`, which does not exist on this Linux host).
 - The README example results table is now **populated with verified benchmark data** from an emulator run on 2026-07-06 (Android 16, API 36) — corrected 2026-07-23 from a previously mislabeled "2026-08-07" date; see the manifest's correction note. Raw artifacts are retained under `results/` — see [`results/run-manifest-2026-07-06.md`](results/run-manifest-2026-07-06.md).
 - NOTE: Results are from an emulator, not a physical device. Physical-device runs should be performed before relying on these numbers for production decisions. See device note in the results section.
 
