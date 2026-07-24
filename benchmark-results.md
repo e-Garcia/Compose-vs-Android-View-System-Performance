@@ -5,6 +5,7 @@
 > **Date:** 2026-07-23
 > **Test harness:** AndroidX Benchmark Macrobenchmark (Jitpack)
 > **Note:** Running on an emulator is not representative of real device performance. Results here are for development iteration — physical device benchmarks are required for production-grade conclusions.
+> **Earlier run:** `README.md`'s Example Results table has a separate 2026-07-06 run. Absolute numbers differ between runs (expected emulator/host variance); both are kept as separate dated data points rather than merged.
 
 ---
 

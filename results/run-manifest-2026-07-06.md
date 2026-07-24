@@ -1,9 +1,14 @@
-# Run Manifest: 2026-08-07 (executed 2026-08-07, committed 2026-08-07)
+# Run Manifest: 2026-07-06 (executed 2026-07-06, committed 2026-07-09)
+
+> **Correction (2026-07-23):** This manifest and the README results table previously
+> cited a run date of 2026-08-07. That date was wrong — the raw perfetto-trace filenames
+> and artifact timestamps under `results/` show the underlying run actually happened on
+> 2026-07-06. The numbers below are unchanged; only the date/filenames were corrected.
 
 ## Run Summary
 
 - **Operator:** Hermes Agent (cron executor)
-- **Run date:** 2026-08-07
+- **Run date:** 2026-07-06
 - **Run type:** Emulator (sdk_gphone64_x86_64, Android 16 / API 36)
 - **Device serial:** emulator-5554 (emulator, not physical device)
 - **Emulator image:** google/sdk_gphone64_x86_64:16/BE4B.251210.005/14574095:userdebug/dev-keys
@@ -49,10 +54,10 @@ The benchmarks were executed via the convenience Gradle tasks (which assemble, i
 
 | Artifact | Path | Size |
 |----------|------|------|
-| Compose benchmark JSON | `results/run-2026-08-07-compose/dev.egarcia.andperf.benchmark-benchmarkData.json` | 185 KB |
-| Compose cold-start text | `results/run-2026-08-07-compose/additionaltestoutput.benchmark.message_dev.egarcia.andperf.benchmark.ComposeBenchmarks.coldStartup_compose.txt` | 1.5 KB |
-| Compose fast-scroll text | `results/run-2026-08-07-compose/additionaltestoutput.benchmark.message_dev.egarcia.andperf.benchmark.ComposeBenchmarks.fastScroll_compose.txt` | 1.3 KB |
-| View benchmark JSON | `results/run-2026-08-07-view.json` | 186 KB |
+| Compose benchmark JSON | `results/run-2026-07-06-compose/dev.egarcia.andperf.benchmark-benchmarkData.json` | 185 KB |
+| Compose cold-start text | `results/run-2026-07-06-compose/additionaltestoutput.benchmark.message_dev.egarcia.andperf.benchmark.ComposeBenchmarks.coldStartup_compose.txt` | 1.5 KB |
+| Compose fast-scroll text | `results/run-2026-07-06-compose/additionaltestoutput.benchmark.message_dev.egarcia.andperf.benchmark.ComposeBenchmarks.fastScroll_compose.txt` | 1.3 KB |
+| View benchmark JSON | `results/run-2026-07-06-view.json` | 186 KB |
 | View cold-start text | `results/additionaltestoutput.benchmark.message_dev.egarcia.andperf.benchmark.ViewBenchmarks.coldStartup_view.txt` | 907 B |
 | View fast-scroll text | `results/additionaltestoutput.benchmark.message_dev.egarcia.andperf.benchmark.ViewBenchmarks.fastScroll_view.txt` | 1.2 KB |
 
@@ -107,6 +112,6 @@ All values extracted from the JSON (`benchmarkData.json`) and text outputs above
 
 ## Summary
 
-This run produced verified benchmark results for four test scenarios (Compose cold-start, Compose fast-scroll, View cold-start, View fast-scroll) on an Android 16 emulator (sdk_gphone64_x86_64). The raw JSON artifacts (`run-2026-08-07-compose/`, `run-2026-08-07-view.json`) and text outputs are retained under `results/` and serve as the single source of truth for the values cited in the README results table above.
+This run produced verified benchmark results for four test scenarios (Compose cold-start, Compose fast-scroll, View cold-start, View fast-scroll) on an Android 16 emulator (sdk_gphone64_x86_64). The raw JSON artifacts (`run-2026-07-06-compose/`, `run-2026-07-06-view.json`) and text outputs are retained under `results/` and serve as the single source of truth for the values cited in the README results table above.
 
 All raw JSON and text artifacts are under `results/`. No perfetto trace files are included in this commit (see `results/README.md` artifact policy for the trace retention rule).

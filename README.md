@@ -14,7 +14,7 @@ device-verified benchmark artifacts before publishing numeric conclusions.
 
 - Benchmark classes currently present in the project are `ComposeBenchmarks` and `ViewBenchmarks` under `benchmark/src/main/java/dev.egarcia.andperf.benchmark/`.
 - Local Gradle verification from this maintenance environment is blocked until Android SDK configuration is corrected (`local.properties` points to `/Users/egarcia/Library/Android/sdk`, which does not exist on this Linux host).
-- The README example results table is now **populated with verified benchmark data** from an emulator run on 2026-08-07 (Android 16, API 36). Raw artifacts are retained under `results/` — see [`results/run-manifest-2026-08-07.md`](results/run-manifest-2026-08-07.md).
+- The README example results table is now **populated with verified benchmark data** from an emulator run on 2026-07-06 (Android 16, API 36) — corrected 2026-07-23 from a previously mislabeled "2026-08-07" date; see the manifest's correction note. Raw artifacts are retained under `results/` — see [`results/run-manifest-2026-07-06.md`](results/run-manifest-2026-07-06.md).
 - NOTE: Results are from an emulator, not a physical device. Physical-device runs should be performed before relying on these numbers for production decisions. See device note in the results section.
 
 ---
@@ -38,14 +38,11 @@ retained under documented device and run conditions.
 
 ```
 compose-vs-views/
- ├── app-compose/        → Jetpack Compose implementation
- ├── app-view/           → XML View + RecyclerView implementation
- ├── shared/             → Shared data models and fake repository
-|benchmark/          → AndroidX Macrobenchmark tests
-| ├── results/            → Tracked benchmark result policy and curated summaries
-| ├── benchmark/          → AndroidX Macrobenchmark test APK sources
-| ├── results/            → JSON / CSV benchmark outputs
- └── paper.md            → Research write-up (draft or published version)
+ ├── app-compose/         → Jetpack Compose implementation
+ ├── app-view/            → XML View + RecyclerView implementation
+ ├── shared/               → Shared data models and fake repository
+ ├── benchmark/            → AndroidX Macrobenchmark test APK sources (runnable classes live under src/main/)
+ └── results/              → Tracked benchmark result policy and curated summaries (see results/README.md)
 ```
 
 ---
@@ -182,9 +179,11 @@ definitions.
 
 ---
 
-## 📈 Example Results _(verified from emulator run 2026-08-07)_
+## 📈 Example Results _(verified from emulator run 2026-07-06)_
 
-_**Device note:** Results below are from an Android 16 (API 36) emulator (`sdk_gphone64_x86_64`), not a physical device. See [`results/run-manifest-2026-08-07.md`](results/run-manifest-2026-08-07.md) for full methodology, device details, command lines, and raw artifact locations._
+_**Device note:** Results below are from an Android 16 (API 36) emulator (`sdk_gphone64_x86_64`), not a physical device. See [`results/run-manifest-2026-07-06.md`](results/run-manifest-2026-07-06.md) for full methodology, device details, command lines, and raw artifact locations._
+
+_**Newer run available:** [`benchmark-results.md`](benchmark-results.md) has results from a later 2026-07-23 emulator run with an updated View cold-start benchmark (adds `FrameTimingMetric`, previously missing). Absolute numbers differ between runs (expected emulator/host variance); both are kept as separate dated data points rather than merged._
 
 || Metric | Compose | Views | Δ Difference |
 |--------|----------|--------|---------------|
@@ -200,7 +199,7 @@ _**Device note:** Results below are from an Android 16 (API 36) emulator (`sdk_g
 | Frames (min / 5 runs) | 469 | 477 |
 | Frames (max / 5 runs) | 473 | 479 |
 
-| **Preliminary Observation:** The View implementation starts ~18% faster than Compose on this Android 16 emulator (300.7 ms vs 353.9 ms cold-start median). Both systems maintain excellent frame counts during fast scrolling (469–479/480 frames), with View keeping marginally more (478 vs 472 median). Frame-time percentiles are near-identical (P95: 8.1 ms Compose vs 8.0 ms View). The modest startup advantage for View is expected on API 36 emulators where the View rendering pipeline has matured more than Compose's composition pipeline. Physical device results may differ, especially for newer devices with more capable GPUs that benefit from Compose's rendering model. See [`results/run-manifest-2026-08-07.md`](results/run-manifest-2026-08-07.md) for full data. |
+| **Preliminary Observation:** The View implementation starts ~18% faster than Compose on this Android 16 emulator (300.7 ms vs 353.9 ms cold-start median). Both systems maintain excellent frame counts during fast scrolling (469–479/480 frames), with View keeping marginally more (478 vs 472 median). Frame-time percentiles are near-identical (P95: 8.1 ms Compose vs 8.0 ms View). The modest startup advantage for View is expected on API 36 emulators where the View rendering pipeline has matured more than Compose's composition pipeline. Physical device results may differ, especially for newer devices with more capable GPUs that benefit from Compose's rendering model. See [`results/run-manifest-2026-07-06.md`](results/run-manifest-2026-07-06.md) for full data. |
 
 ---
 
