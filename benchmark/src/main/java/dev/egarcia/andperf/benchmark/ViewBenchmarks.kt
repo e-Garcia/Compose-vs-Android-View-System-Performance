@@ -22,15 +22,17 @@ class ViewBenchmarks {
         Assume.assumeTrue("Skipping test because target package $pkg is not installed", BenchmarkUtils.isPackageInstalled(pkg))
 
         try {
-            // For view implementation, avoid FrameTimingMetric on some targets that don't provide frame metrics.
+            // Match ComposeBenchmarks: use both StartupTimingMetric and FrameTimingMetric
+            // for a fair apples-to-apples comparison of cold-start and scroll performance.
             rule.measureRepeated(
                 packageName = pkg,
-                metrics = listOf(StartupTimingMetric()),
+                metrics = listOf(StartupTimingMetric(), FrameTimingMetric()),
                 iterations = 3,
                 startupMode = StartupMode.COLD,
                 measureBlock = { startActivityAndWait() }
             )
         } catch (t: Throwable) {
+            // Device may not surface frame metrics — skip gracefully rather than fail.
             Assume.assumeTrue("Skipping benchmark due to metric error: ${t.message}", false)
         }
     }
