@@ -48,18 +48,7 @@ class ComposeBenchmarks {
                 startupMode = StartupMode.WARM,
                 measureBlock = {
                     startActivityAndWait()
-
-                    // perform a series of scroll gestures using UiAutomator helper
-                    val device = BenchmarkUtils.device
-                    val width = device.displayWidth
-                    val height = device.displayHeight
-                    val startX = (width * 0.5).toInt()
-                    val startY = (height * 0.8).toInt()
-                    val endY = (height * 0.2).toInt()
-                    repeat(8) {
-                        device.swipe(startX, startY, startX, endY, 50)
-                        Thread.sleep(150)
-                    }
+                    BenchmarkUtils.performFastScrollGestures()
                 }
             )
         } catch (t: Throwable) {
