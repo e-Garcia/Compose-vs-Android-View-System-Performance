@@ -24,8 +24,8 @@ private val capabilityJson = Json {
     prettyPrint = false
 }
 
-/** Shared helpers for benchmarks. Keep this class minimal and free of instrumentation-specific
- * side-effects so it can be used by multiple test classes. */
+/** Shared helpers for benchmarks: device/package lookups, gesture helpers, and the
+ * capability-report logic used to sanitize requested metrics before measuring. */
 object BenchmarkUtils {
 
     val device: UiDevice

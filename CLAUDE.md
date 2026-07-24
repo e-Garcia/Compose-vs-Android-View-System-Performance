@@ -77,9 +77,7 @@ Install benchmark builds (convenience tasks defined in root build.gradle.kts):
 **IMPORTANT:** Benchmark tests actually live in `benchmark/src/main/java/dev/egarcia/andperf/benchmark/` (this is a `com.android.test` module, so its "main" source set — not `androidTest` — is what gets compiled into the instrumentation APK). The runnable classes are `ComposeBenchmarks.kt`, `ViewBenchmarks.kt`, and `SmokeBenchmark.kt`.
 There is a leftover `benchmark/src/androidTest/java/.../BenchmarkUtils.kt` file that is **not** part of the build for this module (dead code from an earlier metric-capability refactor — see Known Issues below). Do not edit it expecting it to affect test behavior; edit `benchmark/src/main/.../BenchmarkUtils.kt` instead.
 
-> **Known broken tasks:** `runBenchmarkCompose`, `runBenchmarkView`, and `runAllBenchmarks` (below) currently fail immediately with `Task ... not found` — verified with `./gradlew runBenchmarkCompose --dry-run`. `runBenchmarkCompose`/`runAllBenchmarks` depend on `:benchmark:benchmarkComposeRun`, which is never defined anywhere in the build. `runBenchmarkView` depends on `:benchmark:benchmarkViewRun`, but that task is registered on the **root** project, not inside `:benchmark`. Until `build.gradle.kts` is fixed, use `runBenchmarkComposeClass` / `runBenchmarkViewClass` or the raw `connectedBenchmarkAndroidTest` invocations further below instead.
-
-Run all benchmarks using convenience tasks (**currently broken, see note above**):
+Run all benchmarks using convenience tasks:
 ```bash
 ./gradlew runBenchmarkCompose       # Compose app benchmarks (full suite)
 ./gradlew runBenchmarkView          # View app benchmarks (full suite)
