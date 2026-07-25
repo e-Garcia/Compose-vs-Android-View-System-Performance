@@ -70,6 +70,14 @@ tasks.register<Exec>("runBenchmarkComposeClass") {
     }
 }
 
+tasks.register<Exec>("benchmarkComposeRun") {
+    group = "benchmark"
+    description = "Run the full Compose benchmark suite against :app-compose"
+    doFirst {
+        commandLine(buildBenchmarkCmd(":app-compose"))
+    }
+}
+
 tasks.register<Exec>("benchmarkViewRun") {
     group = "benchmark"
     description = "Run :benchmark:connectedBenchmarkAndroidTest for :app-view"
@@ -93,26 +101,26 @@ tasks.register<Exec>("runBenchmarkViewClass") {
 tasks.register("runBenchmarkCompose") {
     group = "benchmark"
     description = "Assemble/install :app-compose then run compose benchmarks"
-    dependsOn("assembleInstallCompose", ":benchmark:benchmarkComposeRun")
+    dependsOn("assembleInstallCompose", "benchmarkComposeRun")
 }
 
 tasks.register("runBenchmarkView") {
     group = "benchmark"
     description = "Assemble/install :app-view then run view benchmarks"
-    dependsOn("assembleInstallView", ":benchmark:benchmarkViewRun")
+    dependsOn("assembleInstallView", "benchmarkViewRun")
 }
 
 tasks.register("runAllBenchmarks") {
     group = "benchmark"
     description = "Install both apps then run benchmarks for :app-compose then :app-view sequentially"
-    dependsOn("benchInstallAll", ":benchmark:benchmarkComposeRun", ":benchmark:benchmarkViewRun")
+    dependsOn("benchInstallAll", "benchmarkComposeRun", "benchmarkViewRun")
 }
 
 // enforce ordering so installs happen before running benchmarks (conditional: only if the Macrobenchmark plugin provides these tasks)
 try {
-    tasks.named(":benchmark:benchmarkComposeRun").configure { mustRunAfter("benchInstallAll") }
+    tasks.named("benchmarkComposeRun").configure { mustRunAfter("benchInstallAll") }
 } catch (e: UnknownTaskException) {}
 // enforce ordering: run view after compose (conditional)
 try {
-    tasks.named(":benchmark:benchmarkViewRun").configure { mustRunAfter("benchmarkComposeRun") }
+    tasks.named("benchmarkViewRun").configure { mustRunAfter("benchmarkComposeRun") }
 } catch (e: UnknownTaskException) {}

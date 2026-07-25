@@ -5,6 +5,7 @@
 > **Date:** 2026-07-23
 > **Test harness:** AndroidX Benchmark Macrobenchmark (Jitpack)
 > **Note:** Running on an emulator is not representative of real device performance. Results here are for development iteration — physical device benchmarks are required for production-grade conclusions.
+> **Earlier run:** `README.md`'s Example Results table has a separate 2026-07-06 run. Absolute numbers differ between runs (expected emulator/host variance); both are kept as separate dated data points rather than merged.
 
 ---
 
@@ -142,5 +143,5 @@ metrics = listOf(StartupTimingMetric(), FrameTimingMetric()),
 3. [ ] Add image-thumbnail scrolling benchmark (both frameworks)
 4. [ ] Add JVM unit tests estimating LazyColumn virtualization vs RecyclerView pool (ground-truth baseline)
 5. [ ] Implement capability-based metric routing (wiring `sanitizedMetricsForBenchmark()` into actual benchmark classes)
-6. [ ] Switch View's MainActivity to `ComponentActivity` (parity with Compose)
+6. [x] Switch View's MainActivity to `ComponentActivity` (parity with Compose) — done 2026-07-23; `Theme.MaterialComponents.DayNight.NoActionBar` still resolves fine without `AppCompatActivity` since nothing here uses AppCompat delegate behaviors (no ActionBar/Toolbar, no vector-drawable back-compat needed at minSdk 24). Verified `assembleBenchmark`/`assembleRelease` (incl. `lintVitalRelease`) still pass. Not yet re-benchmarked on a device to confirm it changes cold-start numbers.
 7. [ ] Add power, thermal, memory, and network benchmarks (capability model already designed)

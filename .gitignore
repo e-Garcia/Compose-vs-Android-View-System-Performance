@@ -35,3 +35,9 @@ google-services.json
 
 # OS
 .DS_Store
+
+# Raw benchmark artifacts (see results/README.md — curated summaries/manifests only, raw
+# per-run JSON and additionaltestoutput dumps are retained locally, not in Git)
+results/run-*.json
+results/run-*/
+results/*additionaltestoutput*.txt

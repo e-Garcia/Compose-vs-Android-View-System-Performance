@@ -61,6 +61,9 @@ kotlin { jvmToolchain(17) }
 
 dependencies {
     implementation(project(":shared"))
+    // :shared declares this as `implementation`, so it isn't transitive; the capability report
+    // JSON logging in BenchmarkUtils.kt needs it directly on this module's classpath.
+    implementation(libs.kotlinx.serialization.json)
 
     // Use explicit coordinates so the test/runtime classpath contains the benchmark and test
     // libraries that the benchmark sources import (MacrobenchmarkRule, AndroidJUnit4, etc.).
